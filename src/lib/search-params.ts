@@ -10,12 +10,24 @@ export const journeySearchSchema = z.object({
 
 export type JourneySearch = z.infer<typeof journeySearchSchema>;
 
+export const bookingSearchSchema = journeySearchSchema.extend({
+  seats: z.string().default(""),
+});
+
+export type BookingSearch = z.infer<typeof bookingSearchSchema>;
+
+function coerce(search: Record<string, unknown>) {
+  return { ...search, passengers: search["passengers"] ? Number(search["passengers"]) : undefined };
+}
+
 export const validateJourneySearch = (search: Record<string, unknown>): JourneySearch => {
-  const parsed = journeySearchSchema.safeParse({
-    ...search,
-    passengers: search["passengers"] ? Number(search["passengers"]) : undefined,
-  });
+  const parsed = journeySearchSchema.safeParse(coerce(search));
   return parsed.success ? parsed.data : journeySearchSchema.parse({});
+};
+
+export const validateBookingSearch = (search: Record<string, unknown>): BookingSearch => {
+  const parsed = bookingSearchSchema.safeParse(coerce(search));
+  return parsed.success ? parsed.data : bookingSearchSchema.parse({});
 };
 
 export function todayISO() {
@@ -31,4 +43,11 @@ export function formatLongDate(date: string) {
   const d = new Date(`${date}T00:00:00`);
   if (Number.isNaN(d.getTime())) return date;
   return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+}
+
+export function fareBreakdown(baseFarePerSeat: number, seats: number) {
+  const baseFare = baseFarePerSeat * seats;
+  const taxes = Math.round(baseFare * 0.05);
+  const convenience = 25 * seats;
+  return { baseFare, taxes, convenience, total: baseFare + taxes + convenience };
 }
