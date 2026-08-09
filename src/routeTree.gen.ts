@@ -10,33 +10,180 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BookingsRouteImport } from './routes/bookings'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as PassRouteImport } from './routes/pass'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as CheckoutJourneyIdRouteImport } from './routes/checkout.$journeyId'
+import { Route as ConfirmationPnrRouteImport } from './routes/confirmation.$pnr'
+import { Route as JourneyJourneyIdRouteImport } from './routes/journey.$journeyId'
+import { Route as SeatsJourneyIdRouteImport } from './routes/seats.$journeyId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BookingsRoute = BookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PassRoute = PassRouteImport.update({
+  id: '/pass',
+  path: '/pass',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutJourneyIdRoute = CheckoutJourneyIdRouteImport.update({
+  id: '/checkout/$journeyId',
+  path: '/checkout/$journeyId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmationPnrRoute = ConfirmationPnrRouteImport.update({
+  id: '/confirmation/$pnr',
+  path: '/confirmation/$pnr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JourneyJourneyIdRoute = JourneyJourneyIdRouteImport.update({
+  id: '/journey/$journeyId',
+  path: '/journey/$journeyId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SeatsJourneyIdRoute = SeatsJourneyIdRouteImport.update({
+  id: '/seats/$journeyId',
+  path: '/seats/$journeyId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bookings': typeof BookingsRoute
+  '/dashboard': typeof DashboardRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/pass': typeof PassRoute
+  '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
+  '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
+  '/confirmation/$pnr': typeof ConfirmationPnrRoute
+  '/journey/$journeyId': typeof JourneyJourneyIdRoute
+  '/seats/$journeyId': typeof SeatsJourneyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bookings': typeof BookingsRoute
+  '/dashboard': typeof DashboardRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/pass': typeof PassRoute
+  '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
+  '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
+  '/confirmation/$pnr': typeof ConfirmationPnrRoute
+  '/journey/$journeyId': typeof JourneyJourneyIdRoute
+  '/seats/$journeyId': typeof SeatsJourneyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bookings': typeof BookingsRoute
+  '/dashboard': typeof DashboardRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/pass': typeof PassRoute
+  '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
+  '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
+  '/confirmation/$pnr': typeof ConfirmationPnrRoute
+  '/journey/$journeyId': typeof JourneyJourneyIdRoute
+  '/seats/$journeyId': typeof SeatsJourneyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/bookings'
+    | '/dashboard'
+    | '/forgot-password'
+    | '/login'
+    | '/pass'
+    | '/search'
+    | '/signup'
+    | '/checkout/$journeyId'
+    | '/confirmation/$pnr'
+    | '/journey/$journeyId'
+    | '/seats/$journeyId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/bookings'
+    | '/dashboard'
+    | '/forgot-password'
+    | '/login'
+    | '/pass'
+    | '/search'
+    | '/signup'
+    | '/checkout/$journeyId'
+    | '/confirmation/$pnr'
+    | '/journey/$journeyId'
+    | '/seats/$journeyId'
+  id:
+    | '__root__'
+    | '/'
+    | '/bookings'
+    | '/dashboard'
+    | '/forgot-password'
+    | '/login'
+    | '/pass'
+    | '/search'
+    | '/signup'
+    | '/checkout/$journeyId'
+    | '/confirmation/$pnr'
+    | '/journey/$journeyId'
+    | '/seats/$journeyId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BookingsRoute: typeof BookingsRoute
+  DashboardRoute: typeof DashboardRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
+  PassRoute: typeof PassRoute
+  SearchRoute: typeof SearchRoute
+  SignupRoute: typeof SignupRoute
+  CheckoutJourneyIdRoute: typeof CheckoutJourneyIdRoute
+  ConfirmationPnrRoute: typeof ConfirmationPnrRoute
+  JourneyJourneyIdRoute: typeof JourneyJourneyIdRoute
+  SeatsJourneyIdRoute: typeof SeatsJourneyIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +195,100 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bookings': {
+      id: '/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof BookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pass': {
+      id: '/pass'
+      path: '/pass'
+      fullPath: '/pass'
+      preLoaderRoute: typeof PassRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/$journeyId': {
+      id: '/checkout/$journeyId'
+      path: '/checkout/$journeyId'
+      fullPath: '/checkout/$journeyId'
+      preLoaderRoute: typeof CheckoutJourneyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmation/$pnr': {
+      id: '/confirmation/$pnr'
+      path: '/confirmation/$pnr'
+      fullPath: '/confirmation/$pnr'
+      preLoaderRoute: typeof ConfirmationPnrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/journey/$journeyId': {
+      id: '/journey/$journeyId'
+      path: '/journey/$journeyId'
+      fullPath: '/journey/$journeyId'
+      preLoaderRoute: typeof JourneyJourneyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seats/$journeyId': {
+      id: '/seats/$journeyId'
+      path: '/seats/$journeyId'
+      fullPath: '/seats/$journeyId'
+      preLoaderRoute: typeof SeatsJourneyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BookingsRoute: BookingsRoute,
+  DashboardRoute: DashboardRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
+  PassRoute: PassRoute,
+  SearchRoute: SearchRoute,
+  SignupRoute: SignupRoute,
+  CheckoutJourneyIdRoute: CheckoutJourneyIdRoute,
+  ConfirmationPnrRoute: ConfirmationPnrRoute,
+  JourneyJourneyIdRoute: JourneyJourneyIdRoute,
+  SeatsJourneyIdRoute: SeatsJourneyIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
