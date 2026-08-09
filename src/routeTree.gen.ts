@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as JourneyJourneyIdRouteImport } from './routes/journey.$journeyId'
+import { Route as SeatsJourneyIdRouteImport } from './routes/seats.$journeyId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const JourneyJourneyIdRoute = JourneyJourneyIdRouteImport.update({
   path: '/journey/$journeyId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SeatsJourneyIdRoute = SeatsJourneyIdRouteImport.update({
+  id: '/seats/$journeyId',
+  path: '/seats/$journeyId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
   '/journey/$journeyId': typeof JourneyJourneyIdRoute
+  '/seats/$journeyId': typeof SeatsJourneyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
   '/journey/$journeyId': typeof JourneyJourneyIdRoute
+  '/seats/$journeyId': typeof SeatsJourneyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
   '/journey/$journeyId': typeof JourneyJourneyIdRoute
+  '/seats/$journeyId': typeof SeatsJourneyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/search' | '/journey/$journeyId'
+  fullPaths: '/' | '/search' | '/journey/$journeyId' | '/seats/$journeyId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/search' | '/journey/$journeyId'
-  id: '__root__' | '/' | '/search' | '/journey/$journeyId'
+  to: '/' | '/search' | '/journey/$journeyId' | '/seats/$journeyId'
+  id: '__root__' | '/' | '/search' | '/journey/$journeyId' | '/seats/$journeyId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SearchRoute: typeof SearchRoute
   JourneyJourneyIdRoute: typeof JourneyJourneyIdRoute
+  SeatsJourneyIdRoute: typeof SeatsJourneyIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JourneyJourneyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/seats/$journeyId': {
+      id: '/seats/$journeyId'
+      path: '/seats/$journeyId'
+      fullPath: '/seats/$journeyId'
+      preLoaderRoute: typeof SeatsJourneyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SearchRoute: SearchRoute,
   JourneyJourneyIdRoute: JourneyJourneyIdRoute,
+  SeatsJourneyIdRoute: SeatsJourneyIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
