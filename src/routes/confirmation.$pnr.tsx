@@ -4,6 +4,8 @@ import { CheckCircle2, Download, TicketX } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { QrPlaceholder } from "@/components/QrPlaceholder";
 import { TripGuardian } from "@/components/TripGuardian";
+import { TravelReadiness } from "@/components/TravelReadiness";
+import { JourneyAchievement } from "@/components/JourneyAchievement";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppStore";
 import { formatDuration, formatINR } from "@/data/transit";
@@ -150,9 +152,19 @@ function Confirmation() {
         </div>
       </article>
 
-      {/* Trip Guardian */}
+      {/* Achievement badge */}
       <div className="mt-6 print:hidden">
+        <JourneyAchievement booking={booking} allBookings={bookings} />
+      </div>
+
+      {/* Trip Guardian */}
+      <div className="mt-4 print:hidden">
         <TripGuardian booking={booking} />
+      </div>
+
+      {/* Travel Readiness Checklist */}
+      <div className="mt-4 print:hidden">
+        <TravelReadiness booking={booking} />
       </div>
 
       {/* Actions */}

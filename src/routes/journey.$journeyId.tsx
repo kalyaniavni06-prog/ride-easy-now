@@ -4,6 +4,8 @@ import { ArrowLeft, Bus, Clock, MapPinOff, Snowflake, Star, TrainFront } from "l
 import { EmptyState } from "@/components/EmptyState";
 import { TravelTips } from "@/components/TravelTips";
 import { TravelStatus } from "@/components/TravelStatus";
+import { BoardingGuide } from "@/components/BoardingGuide";
+import { SmartAlternatives } from "@/components/SmartAlternatives";
 import { Button } from "@/components/ui/button";
 import { formatDuration, formatINR, searchJourneys } from "@/data/transit";
 import { fareBreakdown, formatLongDate, validateJourneySearch } from "@/lib/search-params";
@@ -169,6 +171,12 @@ function JourneyDetails() {
               </p>
             </div>
           </section>
+
+          {/* Boarding Guide */}
+          <BoardingGuide journey={journey} date={search.date} />
+
+          {/* Smart Alternatives */}
+          <SmartAlternatives currentJourney={journey} search={search} />
 
           {/* Travel status */}
           <TravelStatus journey={journey} date={search.date} />

@@ -14,6 +14,8 @@ import {
 
 import { SearchWidget } from "@/components/SearchWidget";
 import { FavoriteRoutes } from "@/components/FavoriteRoutes";
+import { QuickTripMode } from "@/components/QuickTripMode";
+import { TravelPreferences } from "@/components/TravelPreferences";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { POPULAR_ROUTES, formatINR } from "@/data/transit";
@@ -99,6 +101,11 @@ function Home() {
           {/* Favourite routes */}
           <div className="mt-6">
             <FavoriteRoutes />
+          </div>
+
+          {/* Quick Trip Mode */}
+          <div className="mt-6 surface-panel p-5">
+            <QuickTripMode from="Mumbai" to="Pune" />
           </div>
 
           {/* Quick action tiles */}
@@ -198,6 +205,11 @@ function Home() {
             </Button>
           </div>
         </div>
+      </section>
+
+      {/* Travel Preferences */}
+      <section className="mx-auto max-w-6xl px-4 pb-14">
+        <TravelPreferences />
       </section>
     </>
   );

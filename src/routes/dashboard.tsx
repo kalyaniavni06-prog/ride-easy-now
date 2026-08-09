@@ -249,6 +249,38 @@ function Dashboard() {
         <QuickAction to="/bookings" icon={Ticket} label="My bookings" />
         <QuickAction to="/pass" icon={Wallet} label="Travel pass" />
       </div>
+
+      {/* Trip Summary */}
+      <section className="mt-6 surface-panel p-5">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">📊 Trip Summary</h2>
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 text-sm">
+          <SummaryItem label="Trips planned" value={String(bookings.length)} />
+          <SummaryItem label="Completed" value={String(completed.length)} />
+          <SummaryItem label="Upcoming" value={String(upcoming.length)} />
+          <SummaryItem
+            label="Favourite route"
+            value={bookings.length > 0 ? `${bookings[0]!.from} → ${bookings[0]!.to}` : "—"}
+          />
+          <SummaryItem
+            label="Most used"
+            value={
+              bookings.filter(b => b.type === "bus").length >= bookings.filter(b => b.type === "train").length
+                ? "Bus"
+                : "Train"
+            }
+          />
+        </div>
+        <p className="mt-3 text-[11px] text-muted-foreground">Based on your bookings in this browser · Demo data</p>
+      </section>
+    </div>
+  );
+}
+
+function SummaryItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 px-3 py-2.5 text-center">
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-bold text-foreground truncate">{value}</p>
     </div>
   );
 }

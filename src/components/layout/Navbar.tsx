@@ -3,6 +3,7 @@ import { Bus, LayoutDashboard, LogOut, Menu, Search, Sparkles, Ticket, TrainFron
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { GlobalQuickSearch } from "@/components/GlobalQuickSearch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,6 +65,9 @@ export function Navbar() {
             </Link>
           ))}
         </div>
+
+        {/* GlobalQuickSearch */}
+        <GlobalQuickSearch />
 
         {/* Right side */}
         <div className="ml-auto flex items-center gap-2">
