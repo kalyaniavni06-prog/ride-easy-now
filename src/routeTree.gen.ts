@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookingsRouteImport } from './routes/bookings'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as PassRouteImport } from './routes/pass'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as CheckoutJourneyIdRouteImport } from './routes/checkout.$journeyId'
@@ -26,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
 const BookingsRoute = BookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PassRoute = PassRouteImport.update({
@@ -62,6 +68,7 @@ const SeatsJourneyIdRoute = SeatsJourneyIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bookings': typeof BookingsRoute
+  '/dashboard': typeof DashboardRoute
   '/pass': typeof PassRoute
   '/search': typeof SearchRoute
   '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bookings': typeof BookingsRoute
+  '/dashboard': typeof DashboardRoute
   '/pass': typeof PassRoute
   '/search': typeof SearchRoute
   '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bookings': typeof BookingsRoute
+  '/dashboard': typeof DashboardRoute
   '/pass': typeof PassRoute
   '/search': typeof SearchRoute
   '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bookings'
+    | '/dashboard'
     | '/pass'
     | '/search'
     | '/checkout/$journeyId'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bookings'
+    | '/dashboard'
     | '/pass'
     | '/search'
     | '/checkout/$journeyId'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/bookings'
+    | '/dashboard'
     | '/pass'
     | '/search'
     | '/checkout/$journeyId'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BookingsRoute: typeof BookingsRoute
+  DashboardRoute: typeof DashboardRoute
   PassRoute: typeof PassRoute
   SearchRoute: typeof SearchRoute
   CheckoutJourneyIdRoute: typeof CheckoutJourneyIdRoute
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/bookings'
       fullPath: '/bookings'
       preLoaderRoute: typeof BookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pass': {
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BookingsRoute: BookingsRoute,
+  DashboardRoute: DashboardRoute,
   PassRoute: PassRoute,
   SearchRoute: SearchRoute,
   CheckoutJourneyIdRoute: CheckoutJourneyIdRoute,
