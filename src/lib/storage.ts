@@ -123,3 +123,50 @@ export function generatePNR(type: TransportType) {
   const digits = Math.floor(100000 + Math.random() * 899999);
   return `${type === "bus" ? "TB" : "TR"}${letters}${digits}`;
 }
+
+// ─── Recent searches ──────────────────────────────────────────────────────────
+
+export interface RecentSearch {
+  from: string;
+  to: string;
+  date: string;
+  type: "bus" | "train" | "both";
+  passengers: number;
+  savedAt: string;
+}
+
+const RECENT_KEY = "transitease.recent-searches";
+const MAX_RECENT = 5;
+
+export const recentSearches = {
+  get: (): RecentSearch[] => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem(RECENT_KEY);
+      return raw ? (JSON.parse(raw) as RecentSearch[]) : [];
+    } catch {
+      return [];
+    }
+  },
+  add: (search: Omit<RecentSearch, "savedAt">) => {
+    if (typeof window === "undefined") return;
+    try {
+      const existing = recentSearches.get();
+      // Remove duplicate (same from+to+type)
+      const deduped = existing.filter(
+        (r) => !(r.from === search.from && r.to === search.to && r.type === search.type),
+      );
+      const next: RecentSearch[] = [
+        { ...search, savedAt: new Date().toISOString() },
+        ...deduped,
+      ].slice(0, MAX_RECENT);
+      window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+    } catch {
+      // non-fatal
+    }
+  },
+  clear: () => {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem(RECENT_KEY);
+  },
+};

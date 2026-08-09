@@ -167,6 +167,28 @@ function JourneyDetails() {
               </p>
             </div>
           </section>
+
+          {/* Cancellation policy */}
+          <section className="surface-panel p-5">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Cancellation policy
+            </h2>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              {[
+                { timing: "More than 24 hours before departure", refund: "Full refund (minus ₹50 processing fee)" },
+                { timing: "4–24 hours before departure", refund: "50% refund" },
+                { timing: "Less than 4 hours before departure", refund: "No refund" },
+              ].map((row) => (
+                <li key={row.timing} className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-white/8 bg-white/3 px-3 py-2.5">
+                  <span className="text-muted-foreground">{row.timing}</span>
+                  <span className="font-medium text-foreground">{row.refund}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Demo policy only — no real refunds are processed in this prototype.
+            </p>
+          </section>
         </div>
 
         {/* Right: fare sidebar */}

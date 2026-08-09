@@ -108,6 +108,29 @@ function Confirmation() {
               />
               <TicketItem label="Fare paid" value={formatINR(booking.fareBreakdown.total)} />
             </dl>
+
+            {/* Fare breakdown */}
+            <div className="rounded-lg border border-white/8 bg-white/3 px-4 py-3 text-sm">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Fare breakdown</p>
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Base fare × {booking.seats.length}</span>
+                  <span>{formatINR(booking.fareBreakdown.baseFare)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Taxes (5%)</span>
+                  <span>{formatINR(booking.fareBreakdown.taxes)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Convenience fee</span>
+                  <span>{formatINR(booking.fareBreakdown.convenience)}</span>
+                </div>
+                <div className="flex justify-between border-t border-white/8 pt-1.5 font-semibold">
+                  <span>Total paid</span>
+                  <span className="text-primary">{formatINR(booking.fareBreakdown.total)}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-col items-center gap-2">
