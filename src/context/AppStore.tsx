@@ -1,6 +1,17 @@
+/**
+ * AppStore — central React context.
+ *
+ * Authentication strategy:
+ *   - If Supabase env vars are configured → uses Supabase Auth (email/password).
+ *   - Otherwise → falls back to localStorage demo auth (no server required).
+ *
+ * Bookings, passes, and drafts always use localStorage for the demo.
+ * Swap those reads/writes for Supabase DB queries when a backend is ready.
+ */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { PASS_PLANS } from "@/data/transit";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import {
   storage,
   type AuthUser,
@@ -15,7 +26,7 @@ interface AppState {
   passes: TravelPass[];
   signUp: (input: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   addBooking: (booking: Booking) => void;
   cancelBooking: (id: string) => void;
@@ -34,14 +45,76 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [passes, setPasses] = useState<TravelPass[]>([]);
 
+  // ─── Bootstrap session ────────────────────────────────────────────────────
   useEffect(() => {
-    setUser(storage.getUser());
-    setBookings(storage.getBookings());
-    setPasses(storage.getPasses());
-    setReady(true);
+    if (isSupabaseConfigured && supabase) {
+      // Supabase path: restore session from cookie/localStorage managed by SDK
+      supabase.auth.getSession().then(({ data }) => {
+        const session = data.session;
+        if (session?.user) {
+          const su = session.user;
+          setUser({
+            id: su.id,
+            name: (su.user_metadata?.["name"] as string | undefined) ?? su.email ?? "User",
+            email: su.email ?? "",
+            phone: (su.user_metadata?.["phone"] as string | undefined) ?? undefined,
+          });
+        }
+        setBookings(storage.getBookings());
+        setPasses(storage.getPasses());
+        setReady(true);
+      });
+
+      // Keep session in sync when tab regains focus / auth state changes
+      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          const su = session.user;
+          setUser({
+            id: su.id,
+            name: (su.user_metadata?.["name"] as string | undefined) ?? su.email ?? "User",
+            email: su.email ?? "",
+            phone: (su.user_metadata?.["phone"] as string | undefined) ?? undefined,
+          });
+        } else {
+          setUser(null);
+        }
+      });
+
+      return () => {
+        listener.subscription.unsubscribe();
+      };
+    } else {
+      // Demo / localStorage path
+      setUser(storage.getUser());
+      setBookings(storage.getBookings());
+      setPasses(storage.getPasses());
+      setReady(true);
+      return undefined;
+    }
   }, []);
 
+  // ─── Sign up ──────────────────────────────────────────────────────────────
   const signUp = useCallback<AppState["signUp"]>(async ({ name, email, password, phone }) => {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name, phone: phone ?? "" },
+        },
+      });
+      if (error) {
+        // Translate Supabase error messages to user-friendly text
+        if (error.message.toLowerCase().includes("already registered")) {
+          throw new Error("An account with this email already exists. Try signing in instead.");
+        }
+        throw new Error(error.message);
+      }
+      // Session is set via onAuthStateChange listener above
+      return;
+    }
+
+    // Demo fallback
     await delay();
     const accounts = storage.getAccounts();
     const key = email.toLowerCase();
@@ -53,26 +126,71 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser(newUser);
   }, []);
 
+  // ─── Sign in ──────────────────────────────────────────────────────────────
   const signIn = useCallback<AppState["signIn"]>(async (email, password) => {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (error) {
+        if (
+          error.message.toLowerCase().includes("invalid login") ||
+          error.message.toLowerCase().includes("invalid credentials") ||
+          error.message.toLowerCase().includes("wrong password") ||
+          error.message.toLowerCase().includes("email not confirmed")
+        ) {
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+            throw new Error(
+              "Please confirm your email address first. Check your inbox for a confirmation link from TransitEase.",
+            );
+          }
+          throw new Error("Incorrect email or password. Please check your details and try again.");
+        }
+        throw new Error(error.message);
+      }
+      if (!data.session) {
+        // Account created but email not yet confirmed
+        throw new Error(
+          "Your account is not yet confirmed. Check your inbox for a confirmation email from TransitEase.",
+        );
+      }
+      // User state set by onAuthStateChange
+      return;
+    }
+
+    // Demo fallback
     await delay();
     const accounts = storage.getAccounts();
     const account = accounts[email.toLowerCase()];
     if (!account || account.password !== password) {
-      throw new Error("We couldn't match those details. Check your email and password and try again.");
+      throw new Error("Incorrect email or password. Please check your details and try again.");
     }
     storage.setUser(account.user);
     setUser(account.user);
   }, []);
 
-  const signOut = useCallback(() => {
+  // ─── Sign out ─────────────────────────────────────────────────────────────
+  const signOut = useCallback(async () => {
+    if (isSupabaseConfigured && supabase) {
+      await supabase.auth.signOut();
+      // user state cleared by onAuthStateChange
+      return;
+    }
     storage.setUser(null);
     setUser(null);
   }, []);
 
-  const requestPasswordReset = useCallback<AppState["requestPasswordReset"]>(async () => {
+  // ─── Password reset ───────────────────────────────────────────────────────
+  const requestPasswordReset = useCallback<AppState["requestPasswordReset"]>(async (email) => {
+    if (isSupabaseConfigured && supabase) {
+      await supabase.auth.resetPasswordForEmail(email);
+      return;
+    }
     await delay(700);
   }, []);
 
+  // ─── Bookings (localStorage) ──────────────────────────────────────────────
   const addBooking = useCallback((booking: Booking) => {
     setBookings((prev) => {
       const next = [booking, ...prev];
@@ -89,6 +207,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // ─── Travel passes (localStorage) ────────────────────────────────────────
   const buyPass = useCallback<AppState["buyPass"]>(
     (planId) => {
       const plan = PASS_PLANS.find((p) => p.id === planId) ?? PASS_PLANS[0]!;

@@ -7,8 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useApp } from "@/context/AppStore";
 
 /**
- * Client-side auth gate. When Supabase Auth is connected, replace the
- * `useApp()` session read with the Supabase session — the rest stays the same.
+ * Client-side auth gate.
+ * Works with both Supabase Auth (when configured) and the localStorage demo fallback.
  */
 export function RequireAuth({ children, redirectTo }: { children: ReactNode; redirectTo: string }) {
   const { ready, user } = useApp();
@@ -38,7 +38,7 @@ export function RequireAuth({ children, redirectTo }: { children: ReactNode; red
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
         <div className="surface-panel px-6 py-12 text-center">
-          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
             <LockKeyhole className="size-7" aria-hidden />
           </span>
           <h1 className="mt-5 text-xl font-semibold">Please sign in to continue</h1>
@@ -51,7 +51,7 @@ export function RequireAuth({ children, redirectTo }: { children: ReactNode; red
                 Sign in
               </Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="border-white/12 bg-white/4">
               <Link to="/">Back home</Link>
             </Button>
           </div>

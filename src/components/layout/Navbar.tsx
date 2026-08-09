@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bus, LayoutDashboard, LogOut, Menu, Search, Ticket, TrainFront, User, Wallet } from "lucide-react";
+import { Bus, LayoutDashboard, LogOut, Menu, Search, Sparkles, Ticket, TrainFront, User, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ const NAV = [
   { to: "/bookings", label: "My Bookings", icon: Ticket },
   { to: "/pass", label: "Travel Pass", icon: Wallet },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/assistant", label: "AI Assistant", icon: Sparkles },
 ] as const;
 
 export function Navbar() {
@@ -96,7 +97,7 @@ export function Navbar() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => signOut()} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem onSelect={() => void signOut()} className="text-destructive focus:text-destructive">
                   <LogOut className="mr-2 size-4" /> Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -157,7 +158,7 @@ export function Navbar() {
                 {user && (
                   <div className="mt-4 border-t border-white/8 pt-4 px-1">
                     <button
-                      onClick={signOut}
+                      onClick={() => void signOut()}
                       className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
                     >
                       <LogOut className="size-4 shrink-0" aria-hidden />

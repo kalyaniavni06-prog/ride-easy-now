@@ -5,6 +5,7 @@ import {
   IndianRupee,
   LayoutDashboard,
   ShieldCheck,
+  Sparkles,
   Ticket,
   TrainFront,
   Wallet,
@@ -78,9 +79,20 @@ function Home() {
             </p>
           </div>
 
-          {/* Search widget — the visual focus */}
           <div className="mt-10">
             <SearchWidget />
+          </div>
+
+          {/* AI Assistant CTA */}
+          <div className="mt-5">
+            <Link
+              to="/assistant"
+              className="inline-flex items-center gap-2.5 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all hover:border-primary/50 hover:bg-primary/15"
+            >
+              <Sparkles className="size-4" aria-hidden />
+              Try the AI Travel Assistant — plan, compare and decide in seconds
+              <ArrowRight className="size-3.5 opacity-70" aria-hidden />
+            </Link>
           </div>
 
           {/* Quick action tiles */}

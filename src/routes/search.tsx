@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, CalendarX2, MapPinOff, SearchX, SlidersHorizontal } from "lucide-react";
+import { AlertTriangle, CalendarX2, MapPinOff, SearchX, SlidersHorizontal, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -282,6 +282,18 @@ function SearchResults() {
             </Link>
             .
           </p>
+
+          {/* AI Assistant deep link */}
+          <div className="mt-4 flex justify-center">
+            <Link
+              to="/assistant"
+              search={{ from, to, date, type, passengers }}
+              className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all hover:border-primary/50 hover:bg-primary/15"
+            >
+              <Sparkles className="size-4" aria-hidden />
+              Ask AI — compare options, get recommendations
+            </Link>
+          </div>
         </>
       )}
     </div>

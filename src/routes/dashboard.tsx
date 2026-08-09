@@ -49,7 +49,7 @@ function Dashboard() {
         </div>
         <Button
           variant="outline"
-          onClick={signOut}
+          onClick={() => void signOut()}
           className="border-white/12 bg-white/4 hover:bg-white/8"
         >
           Log out
