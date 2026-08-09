@@ -36,7 +36,7 @@ function Signup() {
     }
     setBusy(true);
     try {
-      await signUp(form.name.trim(), form.email, form.password);
+      await signUp({ name: form.name.trim(), email: form.email, password: form.password });
       toast.success("Account created");
       void navigate({ to: "/dashboard" });
     } catch (err) {
