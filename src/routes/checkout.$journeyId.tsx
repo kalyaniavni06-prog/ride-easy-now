@@ -49,8 +49,9 @@ function Checkout() {
   const draft = draftStore.get();
   const seats = (search.seats ? search.seats.split(",") : (draft?.seats ?? [])).filter(Boolean);
 
-  const [people, setPeople] = useState(
-    seats.map(() => ({ name: "", age: "", gender: "male" as Passenger["gender"] })),
+  type PersonForm = { name: string; age: string; gender: Passenger["gender"] };
+  const [people, setPeople] = useState<PersonForm[]>(
+    seats.map((): PersonForm => ({ name: "", age: "", gender: "male" })),
   );
   const [contact, setContact] = useState({ email: user?.email ?? "", phone: user?.phone ?? "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -72,7 +73,7 @@ function Checkout() {
 
   const fare = fareBreakdown(journey.fare, seats.length);
 
-  const updatePerson = (index: number, patch: Partial<{ name: string; age: string; gender: Passenger["gender"] }>) =>
+  const updatePerson = (index: number, patch: Partial<PersonForm>) =>
     setPeople((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)));
 
   const submit = async (e: React.FormEvent) => {
