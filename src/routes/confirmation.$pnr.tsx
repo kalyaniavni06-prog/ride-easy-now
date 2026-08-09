@@ -3,7 +3,6 @@ import { CheckCircle2, Download, TicketX } from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
 import { QrPlaceholder } from "@/components/QrPlaceholder";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppStore";
 import { formatDuration, formatINR } from "@/data/transit";
@@ -40,72 +39,114 @@ function Confirmation() {
     );
   }
 
-  if (!booking) return <div className="mx-auto max-w-3xl px-4 py-12 text-sm text-muted-foreground">Loading ticket…</div>;
+  if (!booking) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-12 text-center text-sm text-muted-foreground">
+        Loading ticket…
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 print:py-0">
+      {/* Success header */}
       <div className="text-center">
-        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-success/10 text-success">
-          <CheckCircle2 className="size-8" aria-hidden />
+        <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-emerald-400/12 text-emerald-400">
+          <CheckCircle2 className="size-9" aria-hidden />
         </span>
-        <h1 className="mt-4 text-2xl font-bold">Booking confirmed</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Your demo ticket is ready. A copy has been added to My Bookings.
+        <h1 className="mt-5 text-2xl font-bold">Booking confirmed</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Your demo ticket is ready. A copy has been saved to My Bookings.
         </p>
       </div>
 
-      <article className="surface-panel mt-8 overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dashed border-border bg-surface px-6 py-4">
+      {/* Ticket card */}
+      <article className="surface-panel mt-8 overflow-hidden print:shadow-none">
+        {/* Ticket header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dashed border-white/10 bg-white/3 px-6 py-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Booking ID / PNR</p>
-            <p className="text-lg font-bold tracking-wider">{booking.id}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Booking ID / PNR
+            </p>
+            <p className="mt-1 text-xl font-bold tracking-widest text-primary">{booking.id}</p>
           </div>
-          <Badge variant="secondary">{booking.type === "bus" ? "Bus ticket" : "Train ticket"}</Badge>
+          <span
+            className={
+              booking.type === "bus"
+                ? "rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-300"
+                : "rounded-full border border-indigo-400/25 bg-indigo-400/10 px-3 py-1 text-xs font-semibold text-indigo-300"
+            }
+          >
+            {booking.type === "bus" ? "Bus ticket" : "Train ticket"}
+          </span>
         </div>
 
+        {/* Ticket body */}
         <div className="grid gap-6 px-6 py-6 sm:grid-cols-[1fr_auto]">
-          <div className="space-y-4">
+          <div className="space-y-5 min-w-0">
             <div>
-              <p className="text-xl font-bold">
-                {booking.from} → {booking.to}
+              <p className="text-2xl font-bold">
+                {booking.from}{" "}
+                <span className="text-primary">→</span>{" "}
+                {booking.to}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {booking.operator} · {booking.code}
               </p>
             </div>
             <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
-              <Item label="Date" value={formatLongDate(booking.date)} />
-              <Item label="Departure" value={booking.departure} />
-              <Item label="Arrival" value={`${booking.arrival} (${formatDuration(booking.durationMins)})`} />
-              <Item label="Seats" value={booking.seats.join(", ")} />
-              <Item label="Passengers" value={booking.passengers.map((p) => p.name).join(", ")} />
-              <Item label="Fare paid" value={formatINR(booking.fareBreakdown.total)} />
+              <TicketItem label="Date" value={formatLongDate(booking.date)} />
+              <TicketItem label="Departure" value={booking.departure} />
+              <TicketItem
+                label="Arrival"
+                value={`${booking.arrival} (${formatDuration(booking.durationMins)})`}
+              />
+              <TicketItem label="Seats" value={booking.seats.join(", ")} />
+              <TicketItem
+                label="Passengers"
+                value={booking.passengers.map((p) => p.name).join(", ")}
+              />
+              <TicketItem label="Fare paid" value={formatINR(booking.fareBreakdown.total)} />
             </dl>
           </div>
+
           <div className="flex flex-col items-center gap-2">
-            <QrPlaceholder value={booking.id} size={132} />
+            <div className="rounded-xl border border-white/10 bg-white p-2">
+              <QrPlaceholder value={booking.id} size={120} />
+            </div>
             <p className="text-[11px] text-muted-foreground">Show at boarding</p>
           </div>
         </div>
+
+        {/* Ticket footer */}
+        <div className="border-t border-white/8 bg-white/3 px-6 py-3">
+          <p className="text-xs text-muted-foreground">
+            Demo ticket — no real journey is booked. Carry a valid government ID during actual travel.
+          </p>
+        </div>
       </article>
 
+      {/* Actions */}
       <div className="mt-6 flex flex-wrap justify-center gap-3 print:hidden">
-        <Button onClick={() => window.print()}>
-          <Download className="mr-2 size-4" /> Download / print ticket
+        <Button onClick={() => window.print()} className="shadow-sm">
+          <Download className="mr-2 size-4" /> Download / Print ticket
         </Button>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="border-white/12 bg-white/4">
           <Link to="/bookings">View My Bookings</Link>
+        </Button>
+        <Button asChild variant="ghost">
+          <Link to="/">Back to home</Link>
         </Button>
       </div>
     </div>
   );
 }
 
-function Item({ label, value }: { label: string; value: string }) {
+function TicketItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5 font-medium">{value}</dd>
+      <dt className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</dt>
+      <dd className="mt-1 font-medium text-foreground">{value}</dd>
     </div>
   );
 }

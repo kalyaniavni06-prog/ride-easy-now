@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { Bus, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -52,45 +52,74 @@ function Login() {
   };
 
   return (
-    <div className="mx-auto flex max-w-md flex-col px-4 py-14">
-      <h1 className="text-2xl font-bold">Welcome back</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Sign in to see your bookings and passes.</p>
-
-      <form onSubmit={submit} className="surface-panel mt-6 space-y-4 p-6">
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5" />
-        </div>
-        <div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1.5"
-          />
-        </div>
-        {error ? (
-          <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {error}
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="mb-8 flex flex-col items-center text-center">
+          <span className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+            <Bus className="size-6" aria-hidden />
+          </span>
+          <h1 className="mt-4 text-2xl font-bold">Welcome back</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sign in to see your bookings and passes.
           </p>
-        ) : null}
-        <Button type="submit" className="w-full" disabled={busy}>
-          {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null} Log in
-        </Button>
-        <p className="text-center text-sm text-muted-foreground">
-          New here?{" "}
-          <Link to="/signup" className="text-primary hover:underline">
-            Create an account
-          </Link>
-        </p>
-      </form>
+        </div>
+
+        <form onSubmit={submit} className="surface-panel space-y-5 p-6">
+          <div>
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              autoComplete="email"
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="mt-1.5 border-white/12 bg-white/4"
+            />
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Link
+                to="/forgot-password"
+                className="text-xs text-primary hover:underline underline-offset-2"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              autoComplete="current-password"
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1.5 border-white/12 bg-white/4"
+            />
+          </div>
+
+          {error ? (
+            <p
+              role="alert"
+              className="rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+            >
+              {error}
+            </p>
+          ) : null}
+
+          <Button type="submit" className="w-full shadow-sm" disabled={busy}>
+            {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            Log in
+          </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            New here?{" "}
+            <Link to="/signup" className="font-medium text-primary hover:underline underline-offset-2">
+              Create an account
+            </Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }

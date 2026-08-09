@@ -4,12 +4,12 @@ import { toast } from "sonner";
 
 import { EmptyState } from "@/components/EmptyState";
 import { RequireAuth } from "@/components/RequireAuth";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApp } from "@/context/AppStore";
 import { formatINR } from "@/data/transit";
 import { formatLongDate, todayISO } from "@/lib/search-params";
+import { cn } from "@/lib/utils";
 import type { Booking } from "@/lib/storage";
 
 export const Route = createFileRoute("/bookings")({
@@ -37,15 +37,27 @@ function BookingsPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
       <h1 className="text-2xl font-bold">My Bookings</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Tickets are stored on this device for the demo.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Tickets are stored on this device for the demo.
+      </p>
 
       <Tabs defaultValue="upcoming" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
-          <TabsTrigger value="past">Previous ({past.length})</TabsTrigger>
+        <TabsList className="border border-white/10 bg-white/4 p-1">
+          <TabsTrigger
+            value="upcoming"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+          >
+            Upcoming ({upcoming.length})
+          </TabsTrigger>
+          <TabsTrigger
+            value="past"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+          >
+            Previous ({past.length})
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upcoming" className="mt-4 space-y-4">
+        <TabsContent value="upcoming" className="mt-5 space-y-4">
           {upcoming.length === 0 ? (
             <EmptyState
               icon={TicketX}
@@ -55,12 +67,19 @@ function BookingsPage() {
             />
           ) : (
             upcoming.map((b) => (
-              <BookingCard key={b.id} booking={b} onCancel={() => { cancelBooking(b.id); toast.success("Booking cancelled"); }} />
+              <BookingCard
+                key={b.id}
+                booking={b}
+                onCancel={() => {
+                  cancelBooking(b.id);
+                  toast.success("Booking cancelled");
+                }}
+              />
             ))
           )}
         </TabsContent>
 
-        <TabsContent value="past" className="mt-4 space-y-4">
+        <TabsContent value="past" className="mt-5 space-y-4">
           {past.length === 0 ? (
             <EmptyState
               icon={TicketX}
@@ -78,37 +97,72 @@ function BookingsPage() {
 }
 
 function BookingCard({ booking, onCancel }: { booking: Booking; onCancel?: () => void }) {
-  const Icon = booking.type === "bus" ? Bus : TrainFront;
+  const isBus = booking.type === "bus";
+  const Icon = isBus ? Bus : TrainFront;
+  const isConfirmed = booking.status === "confirmed";
+
   return (
-    <article className="surface-panel p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+    <article className="surface-panel p-5 transition-all hover:border-primary/20 hover:shadow-[var(--shadow-lift)]">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          {/* Badges row */}
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="gap-1">
-              <Icon className="size-3.5" aria-hidden /> {booking.type === "bus" ? "Bus" : "Train"}
-            </Badge>
-            <Badge variant={booking.status === "confirmed" ? "default" : "outline"}>
-              {booking.status === "confirmed" ? "Confirmed" : "Cancelled"}
-            </Badge>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                isBus
+                  ? "border border-cyan-400/25 bg-cyan-400/10 text-cyan-300"
+                  : "border border-indigo-400/25 bg-indigo-400/10 text-indigo-300",
+              )}
+            >
+              <Icon className="size-3" aria-hidden />
+              {isBus ? "Bus" : "Train"}
+            </span>
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                isConfirmed
+                  ? "border border-emerald-400/25 bg-emerald-400/10 text-emerald-300"
+                  : "border border-white/10 bg-white/4 text-muted-foreground",
+              )}
+            >
+              {isConfirmed ? "Confirmed" : "Cancelled"}
+            </span>
             <span className="text-xs text-muted-foreground">PNR {booking.id}</span>
           </div>
-          <h2 className="mt-2 text-lg font-semibold">
-            {booking.from} → {booking.to}
+
+          <h2 className="mt-3 text-lg font-bold">
+            {booking.from}{" "}
+            <span className="text-primary">→</span>{" "}
+            {booking.to}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {formatLongDate(booking.date)} · {booking.departure} – {booking.arrival} · Seats {booking.seats.join(", ")}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {formatLongDate(booking.date)} · {booking.departure} – {booking.arrival} · Seats{" "}
+            <span className="font-medium text-foreground">{booking.seats.join(", ")}</span>
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-lg font-bold">{formatINR(booking.fareBreakdown.total)}</p>
-          <div className="mt-2 flex gap-2">
-            <Button asChild variant="outline" size="sm">
+
+        {/* Price + actions */}
+        <div className="flex flex-col items-end gap-3">
+          <p className="text-xl font-bold">{formatINR(booking.fareBreakdown.total)}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="border-white/12 bg-white/4 hover:bg-white/8"
+            >
               <Link to="/confirmation/$pnr" params={{ pnr: booking.id }}>
                 View ticket
               </Link>
             </Button>
             {onCancel ? (
-              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={onCancel}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={onCancel}
+              >
                 Cancel
               </Button>
             ) : null}

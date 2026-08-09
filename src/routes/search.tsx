@@ -92,9 +92,9 @@ function SearchResults() {
   const filters = (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Filters</h2>
-        <Button variant="ghost" size="sm" onClick={resetFilters}>
-          Reset
+        <h2 className="text-sm font-semibold text-foreground">Filters</h2>
+        <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs text-muted-foreground hover:text-foreground">
+          Reset all
         </Button>
       </div>
 
@@ -145,6 +145,7 @@ function SearchResults() {
           step={50}
           onValueChange={(v) => setMaxPrice(v[0] ?? priceCeiling)}
           aria-label="Maximum fare"
+          className="mt-2"
         />
       </FilterGroup>
 
@@ -185,29 +186,40 @@ function SearchResults() {
         </div>
       ) : (
         <>
+          {/* Results header */}
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold">
-                {from} <span className="text-muted-foreground">→</span> {to}
+                {from}{" "}
+                <span className="text-primary">→</span>{" "}
+                {to}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 {formatLongDate(date)} · {results.length} of {all.length} options ·{" "}
                 {passengers === 1 ? "1 passenger" : `${passengers} passengers`}
               </p>
             </div>
+
             <div className="flex items-center gap-2">
+              {/* Mobile filter sheet */}
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="lg:hidden">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="lg:hidden border-white/12 bg-white/4"
+                  >
                     <SlidersHorizontal className="mr-2 size-4" /> Filters
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-80 overflow-y-auto">
-                  <SheetTitle className="px-4 pt-4">Filters</SheetTitle>
+                <SheetContent side="left" className="w-80 overflow-y-auto border-r border-white/8 bg-card">
+                  <SheetTitle className="px-4 pt-5 text-base">Filters</SheetTitle>
                   <div className="p-4">{filters}</div>
                 </SheetContent>
               </Sheet>
-              <div className="inline-flex rounded-lg border border-border bg-surface p-1">
+
+              {/* Sort pills */}
+              <div className="inline-flex rounded-lg border border-white/10 bg-white/4 p-1">
                 {(
                   [
                     { id: "cheapest", label: "Cheapest" },
@@ -223,7 +235,7 @@ function SearchResults() {
                     className={cn(
                       "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                       sort === option.id
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary text-primary-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
@@ -234,6 +246,7 @@ function SearchResults() {
             </div>
           </div>
 
+          {/* Layout: sidebar + results */}
           <div className="mt-6 grid gap-6 lg:grid-cols-[260px_1fr]">
             <aside className="surface-panel hidden h-fit p-5 lg:block">{filters}</aside>
 
@@ -251,7 +264,7 @@ function SearchResults() {
                   title="No results match your filters"
                   description="Your filters are a little too tight. Loosen them to see more buses and trains."
                   secondary={
-                    <Button variant="outline" onClick={resetFilters}>
+                    <Button variant="outline" onClick={resetFilters} className="border-white/12 bg-white/4">
                       Reset filters
                     </Button>
                   }
@@ -264,7 +277,7 @@ function SearchResults() {
 
           <p className="mt-8 text-center text-xs text-muted-foreground">
             Demo schedules only.{" "}
-            <Link to="/pass" className="underline">
+            <Link to="/pass" className="text-primary underline underline-offset-2 hover:no-underline">
               Frequent traveller? Get a pass
             </Link>
             .
@@ -278,7 +291,7 @@ function SearchResults() {
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
       <div className="space-y-2.5">{children}</div>
     </div>
   );
@@ -298,7 +311,7 @@ function CheckRow({
   return (
     <div className="flex items-center gap-2.5">
       <Checkbox id={id} checked={checked} onCheckedChange={onChange} />
-      <Label htmlFor={id} className="text-sm font-normal">
+      <Label htmlFor={id} className="text-sm font-normal text-muted-foreground cursor-pointer">
         {label}
       </Label>
     </div>

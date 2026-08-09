@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { Bus, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -47,55 +47,78 @@ function Signup() {
   };
 
   return (
-    <div className="mx-auto flex max-w-md flex-col px-4 py-14">
-      <h1 className="text-2xl font-bold">Create your account</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Book faster and keep every ticket in one place.</p>
-
-      <form onSubmit={submit} className="surface-panel mt-6 space-y-4 p-6">
-        <div>
-          <Label htmlFor="name">Full name</Label>
-          <Input
-            id="name"
-            value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-            className="mt-1.5"
-          />
-        </div>
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-            className="mt-1.5"
-          />
-        </div>
-        <div>
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-            className="mt-1.5"
-          />
-        </div>
-        {error ? (
-          <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {error}
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="mb-8 flex flex-col items-center text-center">
+          <span className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+            <Bus className="size-6" aria-hidden />
+          </span>
+          <h1 className="mt-4 text-2xl font-bold">Create your account</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Book faster and keep every ticket in one place.
           </p>
-        ) : null}
-        <Button type="submit" className="w-full" disabled={busy}>
-          {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null} Create account
-        </Button>
-        <p className="text-center text-sm text-muted-foreground">
-          Already registered?{" "}
-          <Link to="/login" className="text-primary hover:underline">
-            Log in
-          </Link>
-        </p>
-      </form>
+        </div>
+
+        <form onSubmit={submit} className="surface-panel space-y-5 p-6">
+          <div>
+            <Label htmlFor="name" className="text-sm font-medium">Full name</Label>
+            <Input
+              id="name"
+              value={form.name}
+              autoComplete="name"
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+              placeholder="Ananya Sharma"
+              className="mt-1.5 border-white/12 bg-white/4"
+            />
+          </div>
+          <div>
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={form.email}
+              autoComplete="email"
+              onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+              placeholder="you@example.com"
+              className="mt-1.5 border-white/12 bg-white/4"
+            />
+          </div>
+          <div>
+            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={form.password}
+              autoComplete="new-password"
+              onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+              placeholder="At least 6 characters"
+              className="mt-1.5 border-white/12 bg-white/4"
+            />
+          </div>
+
+          {error ? (
+            <p
+              role="alert"
+              className="rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+            >
+              {error}
+            </p>
+          ) : null}
+
+          <Button type="submit" className="w-full shadow-sm" disabled={busy}>
+            {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            Create account
+          </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Already registered?{" "}
+            <Link to="/login" className="font-medium text-primary hover:underline underline-offset-2">
+              Log in
+            </Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }

@@ -54,56 +54,75 @@ export function SearchWidget({ initial, compact = false }: { initial?: Partial<J
   return (
     <form
       onSubmit={submit}
-      className={cn("surface-panel p-4 sm:p-5", compact ? "shadow-none" : "shadow-[var(--shadow-lift)]")}
+      className={cn(
+        "surface-panel p-4 sm:p-5",
+        compact ? "shadow-none" : "shadow-[var(--shadow-lift)]",
+      )}
       aria-label="Journey search"
     >
       <div className="grid gap-4 md:grid-cols-12">
+        {/* From */}
         <div className="md:col-span-3">
-          <Label htmlFor="from" className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <Label
+            htmlFor="from"
+            className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
             From
           </Label>
           <Select value={from} onValueChange={setFrom}>
-            <SelectTrigger id="from" className="w-full">
+            <SelectTrigger id="from" className="w-full border-white/12 bg-white/4 hover:border-white/20 focus:border-primary">
               <MapPin className="size-4 text-muted-foreground" aria-hidden />
               <SelectValue placeholder="Departure city" />
             </SelectTrigger>
             <SelectContent>
               {CITIES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
+                <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
+        {/* Swap */}
         <div className="flex items-end justify-center md:col-span-1">
-          <Button type="button" variant="outline" size="icon" onClick={swap} aria-label="Swap cities">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={swap}
+            aria-label="Swap cities"
+            className="border-white/12 bg-white/4 hover:bg-primary/15 hover:border-primary/30 hover:text-primary"
+          >
             <ArrowLeftRight className="size-4" />
           </Button>
         </div>
 
+        {/* To */}
         <div className="md:col-span-3">
-          <Label htmlFor="to" className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <Label
+            htmlFor="to"
+            className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
             To
           </Label>
           <Select value={to} onValueChange={setTo}>
-            <SelectTrigger id="to" className="w-full">
+            <SelectTrigger id="to" className="w-full border-white/12 bg-white/4 hover:border-white/20 focus:border-primary">
               <MapPin className="size-4 text-muted-foreground" aria-hidden />
               <SelectValue placeholder="Destination city" />
             </SelectTrigger>
             <SelectContent>
               {CITIES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
+                <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
+        {/* Date */}
         <div className="md:col-span-3">
-          <Label htmlFor="date" className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <Label
+            htmlFor="date"
+            className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
             Travel date
           </Label>
           <div className="relative">
@@ -117,11 +136,18 @@ export function SearchWidget({ initial, compact = false }: { initial?: Partial<J
               value={date}
               min={todayISO()}
               onChange={(e) => setDate(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm shadow-xs outline-none focus-visible:border-ring"
+              className={cn(
+                "h-9 w-full rounded-md border pl-9 pr-3 text-sm",
+                "border-white/12 bg-white/4 text-foreground",
+                "[color-scheme:dark]",
+                "hover:border-white/20 focus:border-primary focus:outline-none",
+                "transition-colors",
+              )}
             />
           </div>
         </div>
 
+        {/* Passengers */}
         <div className="md:col-span-2">
           <Label
             htmlFor="passengers"
@@ -130,7 +156,7 @@ export function SearchWidget({ initial, compact = false }: { initial?: Partial<J
             Passengers
           </Label>
           <Select value={String(passengers)} onValueChange={(v) => setPassengers(Number(v))}>
-            <SelectTrigger id="passengers" className="w-full">
+            <SelectTrigger id="passengers" className="w-full border-white/12 bg-white/4 hover:border-white/20 focus:border-primary">
               <Users className="size-4 text-muted-foreground" aria-hidden />
               <SelectValue />
             </SelectTrigger>
@@ -145,11 +171,12 @@ export function SearchWidget({ initial, compact = false }: { initial?: Partial<J
         </div>
       </div>
 
+      {/* Bottom row: type toggle + submit */}
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div
           role="radiogroup"
           aria-label="Transport type"
-          className="inline-flex rounded-lg border border-border bg-surface p-1"
+          className="inline-flex rounded-lg border border-white/10 bg-white/4 p-1"
         >
           {TYPES.map((t) => (
             <button
@@ -160,20 +187,26 @@ export function SearchWidget({ initial, compact = false }: { initial?: Partial<J
               onClick={() => setType(t.value)}
               className={cn(
                 "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
-                type === t.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                type === t.value
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {t.label}
             </button>
           ))}
         </div>
-        <Button type="submit" size="lg" className="gap-2 sm:w-auto">
-          <Search className="size-4" aria-hidden /> Search journeys
+        <Button type="submit" size="lg" className="gap-2 shadow-sm sm:w-auto">
+          <Search className="size-4" aria-hidden />
+          Search journeys
         </Button>
       </div>
 
       {error ? (
-        <p role="alert" className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p
+          role="alert"
+          className="mt-3 rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           {error}
         </p>
       ) : null}

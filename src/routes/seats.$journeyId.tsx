@@ -89,7 +89,7 @@ function SeatSelection() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <Button asChild variant="ghost" size="sm" className="-ml-2 mb-4">
+      <Button asChild variant="ghost" size="sm" className="-ml-2 mb-6 text-muted-foreground hover:text-foreground">
         <Link to="/journey/$journeyId" params={{ journeyId: journey.id }} search={search}>
           <ArrowLeft className="mr-2 size-4" /> Journey details
         </Link>
@@ -97,28 +97,30 @@ function SeatSelection() {
 
       <h1 className="text-2xl font-bold">Select your seats</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        {journey.operator} · {search.from} → {search.to} · {journey.departure}
+        {journey.operator} · {search.from} → {search.to} · Departs {journey.departure}
       </p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+        {/* Seat map */}
         <section className="surface-panel p-5">
-          <div className="flex flex-wrap gap-4 text-xs">
-            <Legend className="border-border bg-card" label="Available" />
-            <Legend className="border-primary bg-primary text-primary-foreground" label="Selected" />
-            <Legend className="border-border bg-muted text-muted-foreground" label="Unavailable" />
+          {/* Legend */}
+          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+            <Legend className="border-white/15 bg-card" label="Available" />
+            <Legend className="border-primary/60 bg-primary/20 text-primary" label="Selected" />
+            <Legend className="cursor-not-allowed border-white/8 bg-white/4 text-muted-foreground/50" label="Unavailable" />
           </div>
 
           <div className="mt-6 overflow-x-auto">
-            <div className="mx-auto w-fit rounded-2xl border border-border bg-surface p-4">
-              <p className="mb-4 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {journey.type === "bus" ? "Driver" : "Engine"} →
+            <div className="mx-auto w-fit rounded-2xl border border-white/10 bg-[oklch(0.185_0.024_256)] p-5">
+              <p className="mb-4 text-right text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                {journey.type === "bus" ? "Driver →" : "Engine →"}
               </p>
               <div className="space-y-2">
                 {Array.from({ length: layout.rows }, (_, r) => r + 1).map((row) => {
                   const rowSeats = layout.seats.filter((s) => s.row === row);
                   return (
                     <div key={row} className="flex items-center gap-2">
-                      <span className="w-5 text-right text-[11px] text-muted-foreground">{row}</span>
+                      <span className="w-5 shrink-0 text-right text-[11px] text-muted-foreground/60">{row}</span>
                       <div className="flex gap-1.5">
                         {rowSeats
                           .filter((s) => s.side === "left")
@@ -131,7 +133,7 @@ function SeatSelection() {
                             />
                           ))}
                       </div>
-                      <span className="w-6" aria-hidden />
+                      <span className="w-6 shrink-0" aria-hidden />
                       <div className="flex gap-1.5">
                         {rowSeats
                           .filter((s) => s.side === "right")
@@ -152,44 +154,61 @@ function SeatSelection() {
           </div>
         </section>
 
+        {/* Sidebar */}
         <aside className="lg:sticky lg:top-24 lg:h-fit">
           <div className="surface-panel p-5">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Your selection</h2>
-            <p className="mt-3 text-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Your selection
+            </h2>
+
+            <div className="mt-3 min-h-[2.5rem]">
               {selected.length === 0 ? (
-                <span className="text-muted-foreground">No seats selected yet</span>
+                <p className="text-sm text-muted-foreground">No seats selected yet.</p>
               ) : (
-                <span className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   {selected.map((s) => (
-                    <span key={s} className="rounded-md bg-accent px-2 py-1 text-xs font-semibold text-accent-foreground">
+                    <span
+                      key={s}
+                      className="rounded-md border border-primary/30 bg-primary/12 px-2 py-1 text-xs font-semibold text-primary"
+                    >
                       {s}
                     </span>
                   ))}
-                </span>
+                </div>
               )}
-            </p>
-            <p className="mt-3 text-xs text-muted-foreground">
+            </div>
+
+            <p className="mt-2 text-xs text-muted-foreground">
               {selected.length}/{required} seats selected for this booking.
             </p>
 
-            <dl className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
+            <dl className="mt-4 space-y-2.5 border-t border-white/8 pt-4 text-sm">
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Base fare</dt>
                 <dd className="tabular-nums">{formatINR(fare.baseFare)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Taxes & fees</dt>
+                <dt className="text-muted-foreground">Taxes &amp; fees</dt>
                 <dd className="tabular-nums">{formatINR(fare.taxes + fare.convenience)}</dd>
               </div>
-              <div className="flex justify-between border-t border-border pt-2">
+              <div className="flex justify-between border-t border-white/8 pt-2.5">
                 <dt className="font-semibold">Total</dt>
                 <dd className="text-base font-bold">{formatINR(fare.total)}</dd>
               </div>
             </dl>
 
-            <Button className="mt-4 w-full" size="lg" onClick={proceed} disabled={selected.length !== required}>
+            <Button
+              className="mt-4 w-full shadow-sm"
+              size="lg"
+              onClick={proceed}
+              disabled={selected.length !== required}
+            >
               Continue to passenger details
             </Button>
+
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              Select {required} {required === 1 ? "seat" : "seats"} to continue
+            </p>
           </div>
         </aside>
       </div>
@@ -197,7 +216,15 @@ function SeatSelection() {
   );
 }
 
-function SeatButton({ id, state, onClick }: { id: string; state: "free" | "selected" | "blocked"; onClick: () => void }) {
+function SeatButton({
+  id,
+  state,
+  onClick,
+}: {
+  id: string;
+  state: "free" | "selected" | "blocked";
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -206,10 +233,13 @@ function SeatButton({ id, state, onClick }: { id: string; state: "free" | "selec
       aria-pressed={state === "selected"}
       aria-label={`Seat ${id} — ${state === "blocked" ? "unavailable" : state === "selected" ? "selected" : "available"}`}
       className={cn(
-        "flex size-9 items-center justify-center rounded-md border text-[11px] font-medium transition-all",
-        state === "free" && "border-border bg-card hover:border-primary hover:text-primary",
-        state === "selected" && "scale-105 border-primary bg-primary text-primary-foreground",
-        state === "blocked" && "cursor-not-allowed border-border bg-muted text-muted-foreground/60",
+        "flex size-9 items-center justify-center rounded-lg border text-[11px] font-semibold transition-all",
+        state === "free" &&
+          "border-white/15 bg-card text-muted-foreground hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
+        state === "selected" &&
+          "scale-105 border-primary bg-primary/20 text-primary shadow-sm",
+        state === "blocked" &&
+          "cursor-not-allowed border-white/6 bg-white/3 text-muted-foreground/30",
       )}
     >
       {id}
@@ -219,8 +249,11 @@ function SeatButton({ id, state, onClick }: { id: string; state: "free" | "selec
 
 function Legend({ className, label }: { className: string; label: string }) {
   return (
-    <span className="flex items-center gap-2 text-muted-foreground">
-      <span className={cn("flex size-6 items-center justify-center rounded-md border", className)} aria-hidden>
+    <span className="flex items-center gap-2">
+      <span
+        className={cn("flex size-6 items-center justify-center rounded-md border", className)}
+        aria-hidden
+      >
         <ArmchairIcon className="size-3.5" />
       </span>
       {label}
