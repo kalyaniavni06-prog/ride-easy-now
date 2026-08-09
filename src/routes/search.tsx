@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { JourneyCard } from "@/components/JourneyCard";
 import { SearchWidget } from "@/components/SearchWidget";
+import { SmartTripPlanner } from "@/components/SmartTripPlanner";
+import { TripComparison } from "@/components/TripComparison";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -250,7 +252,7 @@ function SearchResults() {
           <div className="mt-6 grid gap-6 lg:grid-cols-[260px_1fr]">
             <aside className="surface-panel hidden h-fit p-5 lg:block">{filters}</aside>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {all.length === 0 ? (
                 <EmptyState
                   icon={SearchX}
@@ -270,7 +272,18 @@ function SearchResults() {
                   }
                 />
               ) : (
-                results.map((journey) => <JourneyCard key={journey.id} journey={journey} search={search} />)
+                <>
+                  {/* Smart Trip Planner */}
+                  <SmartTripPlanner search={search} />
+
+                  {/* Results */}
+                  <div className="space-y-4">
+                    {results.map((journey) => <JourneyCard key={journey.id} journey={journey} search={search} />)}
+                  </div>
+
+                  {/* Trip Comparison */}
+                  {results.length >= 2 && <TripComparison search={search} />}
+                </>
               )}
             </div>
           </div>

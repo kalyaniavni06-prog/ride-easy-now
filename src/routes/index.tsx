@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { SearchWidget } from "@/components/SearchWidget";
+import { FavoriteRoutes } from "@/components/FavoriteRoutes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { POPULAR_ROUTES, formatINR } from "@/data/transit";
@@ -93,6 +94,11 @@ function Home() {
               Try the AI Travel Assistant — plan, compare and decide in seconds
               <ArrowRight className="size-3.5 opacity-70" aria-hidden />
             </Link>
+          </div>
+
+          {/* Favourite routes */}
+          <div className="mt-6">
+            <FavoriteRoutes />
           </div>
 
           {/* Quick action tiles */}

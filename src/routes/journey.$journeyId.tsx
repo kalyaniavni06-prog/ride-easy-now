@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Bus, Clock, MapPinOff, Snowflake, Star, TrainFront } from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
+import { TravelTips } from "@/components/TravelTips";
+import { TravelStatus } from "@/components/TravelStatus";
 import { Button } from "@/components/ui/button";
 import { formatDuration, formatINR, searchJourneys } from "@/data/transit";
 import { fareBreakdown, formatLongDate, validateJourneySearch } from "@/lib/search-params";
@@ -168,6 +170,9 @@ function JourneyDetails() {
             </div>
           </section>
 
+          {/* Travel status */}
+          <TravelStatus journey={journey} date={search.date} />
+
           {/* Cancellation policy */}
           <section className="surface-panel p-5">
             <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
@@ -189,6 +194,9 @@ function JourneyDetails() {
               Demo policy only — no real refunds are processed in this prototype.
             </p>
           </section>
+
+          {/* Smart travel tips */}
+          <TravelTips journey={journey} />
         </div>
 
         {/* Right: fare sidebar */}

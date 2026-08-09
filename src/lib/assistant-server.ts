@@ -35,15 +35,49 @@ RULES:
 
 function buildDemoResponse(query: string, journeyContext: string): string {
   const q = query.toLowerCase();
-  const note = "⚠️ *Demo mode — OPENAI_API_KEY not configured. Connect your OpenAI key in Vercel to enable live AI.*\n\n";
 
-  if (q.includes("delay") || q.includes("late")) {
-    return `${note}**If your journey is delayed:**\n\n1. Stay at the boarding point and check the official display board.\n2. For trains: use the NTES app or ask at the enquiry counter.\n3. For buses: call the operator helpline on your ticket.\n4. Keep your booking reference (PNR) ready.\n5. If delayed by more than 2 hours, ask staff about refund/rescheduling options.\n\n⚠️ I don't have live delay data. Always verify with the official operator.`;
+  // Journey-context-aware responses when we have route data
+  if (journeyContext) {
+    if (q.includes("cheap") || q.includes("budget") || q.includes("price") || q.includes("₹")) {
+      return `Here are the available options sorted by price:\n\n${journeyContext}\n\nThe **first option** above has the lowest fare. If budget is your priority, that's the one to go with.\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+    }
+    if (q.includes("fast") || q.includes("quick") || q.includes("time")) {
+      return `Looking at journey durations for your route:\n\n${journeyContext}\n\nPick the option with the shortest travel time listed above.\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+    }
+    if (q.includes("compare") || q.includes("train") || q.includes("bus") || q.includes("vs") || q.includes("which")) {
+      return `Here's what's available for your route:\n\n${journeyContext}\n\n**Quick comparison:** Trains are generally faster and more comfortable; buses are often cheaper and have more departure times. Look at the fares and durations above to decide which suits you.\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+    }
+    if (q.includes("best") || q.includes("recommend") || q.includes("suggest")) {
+      return `Based on your route data:\n\n${journeyContext}\n\nFor the **best overall value**, weigh the fare against the duration. The option with the highest rating (★) and a reasonable departure time is usually a safe bet.\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+    }
+    if (q.includes("morning") || q.includes("early")) {
+      return `Here are all options on your route — look for departures before 12:00:\n\n${journeyContext}\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+    }
   }
-  if (q.includes("carry") || q.includes("checklist") || q.includes("pack")) {
-    return `${note}**Travel checklist:**\n\n✅ Photo ID (Aadhaar/Passport/Driving Licence)\n✅ Booking confirmation / PNR\n✅ Water and snacks for long journeys\n✅ Phone charger / power bank\n✅ Arrive 15–20 minutes before departure\n✅ Verify platform/bay number at the station\n✅ Emergency contacts saved on your phone`;
+
+  // General responses without route context
+  if (q.includes("delay") || q.includes("late") || q.includes("cancel")) {
+    return `**If your journey is delayed:**\n\n1. Stay at the boarding point and watch the official display board.\n2. **Trains:** Check the NTES app or ask at the enquiry counter.\n3. **Buses:** Call the operator helpline shown on your ticket.\n4. Keep your PNR/booking reference ready — you may need it for a refund claim.\n5. If delayed more than 2 hours, ask staff about rescheduling options.\n\nI don't have live delay data — always verify with the official operator.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
   }
-  return `${note}Hello! I'm your TransitEase AI Travel Assistant.\n\nI can help you:\n• **Plan a journey** — tell me where you want to go\n• **Compare train vs bus** options\n• **Find cheapest or fastest** route\n• **Travel checklist** for your trip\n• **What to do if delayed**\n\n${journeyContext ? `\nHere's what I found for your route:\n\n${journeyContext}` : ""}\n\nTry: *"Which is cheaper, train or bus?"* or *"What should I carry?"*`;
+
+  if (q.includes("carry") || q.includes("checklist") || q.includes("pack") || q.includes("bring")) {
+    return `**Your travel checklist:**\n\n✅ Government photo ID (Aadhaar / Passport / Driving Licence)\n✅ Booking confirmation / PNR (screenshot it — saves data)\n✅ Water bottle and light snacks for longer journeys\n✅ Phone charger + power bank\n✅ Arrive 20–30 minutes before departure\n✅ Confirm your platform / bay number before boarding\n✅ Save an emergency contact on your phone\n\nFor overnight trips: add a blanket, eye mask and earplugs.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
+  }
+
+  if (q.includes("platform") || q.includes("boarding") || q.includes("where")) {
+    return `**Finding your boarding point:**\n\n🚆 **Trains:** Your platform is shown on the departure board at the station. Match your train number (e.g. 22119) on the board.\n🚌 **Buses:** The bay number is on the display inside the bus terminal, or ask at the enquiry counter.\n\nArrive early — platforms and bays can change. I don't have live platform data.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
+  }
+
+  if (q.includes("explain") || q.includes("booking") || q.includes("ticket")) {
+    return `**Understanding your booking:**\n\n• **PNR** — your unique booking reference. Keep it safe — you'll need it to board.\n• **Departure / Arrival** — times shown are at your boarding and drop points.\n• **Seat numbers** — verify before boarding that you're in the right seat.\n• **Fare paid** — includes base fare + 5% taxes + convenience fee.\n• **Status** — "Confirmed" means your seat is reserved.\n\nHave your PNR and ID ready when you board.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
+  }
+
+  if (q.includes("plan") || q.includes("help") || q.includes("journey") || q.includes("travel")) {
+    return `I'd be happy to help plan your journey! To give you the best recommendation, tell me:\n\n• Where are you travelling **from** and **to**?\n• What **date** are you travelling?\n• Do you prefer **bus, train, or both**?\n• Is **price or speed** your priority?\n\nOnce you share these, I can compare options and recommend the best one for you.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
+  }
+
+  // Fallback welcome
+  return `Hi! I'm your **TransitEase Travel Assistant**. I can help you:\n\n• **Plan a journey** — tell me your route and date\n• **Compare bus vs train** — price, duration, comfort\n• **Find cheapest / fastest** options\n• **Travel checklist** — what to carry\n• **Booking help** — understand your PNR and ticket\n• **Delay guidance** — what to do if things go wrong\n\nJust ask, or pick a quick prompt below.\n\n*Demo mode · Add OPENAI_API_KEY in Vercel for live AI responses*`;
 }
 
 export const askAssistant = createServerFn({ method: "POST" })
