@@ -15,6 +15,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PassRouteImport } from './routes/pass'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as CheckoutJourneyIdRouteImport } from './routes/checkout.$journeyId'
 import { Route as ConfirmationPnrRouteImport } from './routes/confirmation.$pnr'
 import { Route as JourneyJourneyIdRouteImport } from './routes/journey.$journeyId'
@@ -50,6 +51,11 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutJourneyIdRoute = CheckoutJourneyIdRouteImport.update({
   id: '/checkout/$journeyId',
   path: '/checkout/$journeyId',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pass': typeof PassRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
   '/confirmation/$pnr': typeof ConfirmationPnrRoute
   '/journey/$journeyId': typeof JourneyJourneyIdRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pass': typeof PassRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
   '/confirmation/$pnr': typeof ConfirmationPnrRoute
   '/journey/$journeyId': typeof JourneyJourneyIdRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pass': typeof PassRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
   '/confirmation/$pnr': typeof ConfirmationPnrRoute
   '/journey/$journeyId': typeof JourneyJourneyIdRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pass'
     | '/search'
+    | '/signup'
     | '/checkout/$journeyId'
     | '/confirmation/$pnr'
     | '/journey/$journeyId'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pass'
     | '/search'
+    | '/signup'
     | '/checkout/$journeyId'
     | '/confirmation/$pnr'
     | '/journey/$journeyId'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pass'
     | '/search'
+    | '/signup'
     | '/checkout/$journeyId'
     | '/confirmation/$pnr'
     | '/journey/$journeyId'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PassRoute: typeof PassRoute
   SearchRoute: typeof SearchRoute
+  SignupRoute: typeof SignupRoute
   CheckoutJourneyIdRoute: typeof CheckoutJourneyIdRoute
   ConfirmationPnrRoute: typeof ConfirmationPnrRoute
   JourneyJourneyIdRoute: typeof JourneyJourneyIdRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/$journeyId': {
       id: '/checkout/$journeyId'
       path: '/checkout/$journeyId'
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PassRoute: PassRoute,
   SearchRoute: SearchRoute,
+  SignupRoute: SignupRoute,
   CheckoutJourneyIdRoute: CheckoutJourneyIdRoute,
   ConfirmationPnrRoute: ConfirmationPnrRoute,
   JourneyJourneyIdRoute: JourneyJourneyIdRoute,
