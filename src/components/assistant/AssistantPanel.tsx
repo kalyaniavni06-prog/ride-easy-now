@@ -87,10 +87,13 @@ function extractContext(messages: AssistantMessage[], initial: JourneyContext): 
     if (/comfort|best.?rated|luxury/.test(text)) ctx = { ...ctx, priority: "comfortable" };
     if (msg.role === "user") {
       const found = CITIES.filter((c) => text.includes(c.toLowerCase()));
-      if (found.length >= 2 && !ctx.from && !ctx.to) ctx = { ...ctx, from: found[0], to: found[1] };
-      else if (found.length === 1) {
-        if (!ctx.from) ctx = { ...ctx, from: found[0] };
-        else if (!ctx.to && found[0] !== ctx.from) ctx = { ...ctx, to: found[0] };
+      if (found.length >= 2 && !ctx.from && !ctx.to) {
+        const f0 = found[0]; const f1 = found[1];
+        if (f0 && f1) ctx = { ...ctx, from: f0, to: f1 };
+      } else if (found.length === 1) {
+        const f0 = found[0];
+        if (!ctx.from && f0) ctx = { ...ctx, from: f0 };
+        else if (!ctx.to && f0 && f0 !== ctx.from) ctx = { ...ctx, to: f0 };
       }
     }
   }
@@ -137,7 +140,7 @@ export function AssistantPanel({ initialContext = {}, compact = false, onClose }
     try {
       const result = await queryAssistant(
         { messages: messages.concat({ role: "user", content: text, timestamp: new Date() }).map((m) => ({ role: m.role, content: m.content })), context: ctx },
-        askAssistant,
+        (input) => askAssistant({ data: input }),
       );
       if (!result.isDemo) setIsAiMode(true);
       setMessages((prev) => [

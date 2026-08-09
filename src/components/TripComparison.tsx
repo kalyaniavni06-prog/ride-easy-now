@@ -5,6 +5,7 @@
 import { Link } from "@tanstack/react-router";
 import { Bus, Check, Clock, Star, TrainFront, Users } from "lucide-react";
 
+import type { Journey } from "@/data/transit";
 import { Button } from "@/components/ui/button";
 import { formatDuration, formatINR, searchJourneys } from "@/data/transit";
 import type { JourneySearch } from "@/lib/search-params";
@@ -24,7 +25,7 @@ export function TripComparison({ search }: TripComparisonProps) {
   const byRating = [...all].sort((a, b) => b.rating - a.rating);
 
   const seen = new Set<string>();
-  const picks = [];
+  const picks: Journey[] = [];
   for (const j of [byFare[0], byDur[0], byRating[0]]) {
     if (j && !seen.has(j.id) && picks.length < 3) {
       seen.add(j.id);
