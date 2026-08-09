@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as CheckoutJourneyIdRouteImport } from './routes/checkout.$journeyId'
+import { Route as ConfirmationPnrRouteImport } from './routes/confirmation.$pnr'
 import { Route as JourneyJourneyIdRouteImport } from './routes/journey.$journeyId'
 import { Route as SeatsJourneyIdRouteImport } from './routes/seats.$journeyId'
 
@@ -30,6 +31,11 @@ const CheckoutJourneyIdRoute = CheckoutJourneyIdRouteImport.update({
   path: '/checkout/$journeyId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfirmationPnrRoute = ConfirmationPnrRouteImport.update({
+  id: '/confirmation/$pnr',
+  path: '/confirmation/$pnr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JourneyJourneyIdRoute = JourneyJourneyIdRouteImport.update({
   id: '/journey/$journeyId',
   path: '/journey/$journeyId',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
   '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
+  '/confirmation/$pnr': typeof ConfirmationPnrRoute
   '/journey/$journeyId': typeof JourneyJourneyIdRoute
   '/seats/$journeyId': typeof SeatsJourneyIdRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
   '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
+  '/confirmation/$pnr': typeof ConfirmationPnrRoute
   '/journey/$journeyId': typeof JourneyJourneyIdRoute
   '/seats/$journeyId': typeof SeatsJourneyIdRoute
 }
@@ -60,6 +68,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
   '/checkout/$journeyId': typeof CheckoutJourneyIdRoute
+  '/confirmation/$pnr': typeof ConfirmationPnrRoute
   '/journey/$journeyId': typeof JourneyJourneyIdRoute
   '/seats/$journeyId': typeof SeatsJourneyIdRoute
 }
@@ -69,6 +78,7 @@ export interface FileRouteTypes {
     | '/'
     | '/search'
     | '/checkout/$journeyId'
+    | '/confirmation/$pnr'
     | '/journey/$journeyId'
     | '/seats/$journeyId'
   fileRoutesByTo: FileRoutesByTo
@@ -76,6 +86,7 @@ export interface FileRouteTypes {
     | '/'
     | '/search'
     | '/checkout/$journeyId'
+    | '/confirmation/$pnr'
     | '/journey/$journeyId'
     | '/seats/$journeyId'
   id:
@@ -83,6 +94,7 @@ export interface FileRouteTypes {
     | '/'
     | '/search'
     | '/checkout/$journeyId'
+    | '/confirmation/$pnr'
     | '/journey/$journeyId'
     | '/seats/$journeyId'
   fileRoutesById: FileRoutesById
@@ -91,6 +103,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SearchRoute: typeof SearchRoute
   CheckoutJourneyIdRoute: typeof CheckoutJourneyIdRoute
+  ConfirmationPnrRoute: typeof ConfirmationPnrRoute
   JourneyJourneyIdRoute: typeof JourneyJourneyIdRoute
   SeatsJourneyIdRoute: typeof SeatsJourneyIdRoute
 }
@@ -118,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutJourneyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/confirmation/$pnr': {
+      id: '/confirmation/$pnr'
+      path: '/confirmation/$pnr'
+      fullPath: '/confirmation/$pnr'
+      preLoaderRoute: typeof ConfirmationPnrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/journey/$journeyId': {
       id: '/journey/$journeyId'
       path: '/journey/$journeyId'
@@ -139,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SearchRoute: SearchRoute,
   CheckoutJourneyIdRoute: CheckoutJourneyIdRoute,
+  ConfirmationPnrRoute: ConfirmationPnrRoute,
   JourneyJourneyIdRoute: JourneyJourneyIdRoute,
   SeatsJourneyIdRoute: SeatsJourneyIdRoute,
 }
