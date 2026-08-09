@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { LockKeyhole } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,22 +8,49 @@ import { useApp } from "@/context/AppStore";
 
 /**
  * Client-side auth gate.
- * Works with both Supabase Auth (when configured) and the localStorage demo fallback.
+ *
+ * Works with Supabase Auth (when configured) and the localStorage demo fallback.
+ *
+ * Race-condition note: After login, the user state is set synchronously in
+ * AppStore.signIn before navigate() is called. This component still has a
+ * redirect timer as a fallback for cases where the user genuinely isn't
+ * authenticated (e.g. direct URL access while logged out).
+ *
+ * We do NOT redirect on the very first render cycle — we wait for `ready`
+ * to be true AND give one extra tick for any in-flight state updates to
+ * settle before deciding the user is truly unauthenticated.
  */
 export function RequireAuth({ children, redirectTo }: { children: ReactNode; redirectTo: string }) {
   const { ready, user } = useApp();
   const navigate = useNavigate();
+  // Track whether we've been mounted long enough to safely redirect
+  const stableRef = useRef(false);
 
   useEffect(() => {
-    if (ready && !user) {
-      const timer = setTimeout(() => {
-        void navigate({ to: "/login", search: { redirect: redirectTo } });
-      }, 1200);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
+    // Mark as stable after one frame — this lets any synchronous state updates
+    // from signIn() settle before we evaluate the auth state.
+    const frame = requestAnimationFrame(() => {
+      stableRef.current = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (user) return; // authenticated — nothing to do
+
+    // Not authenticated. Give React 100ms to process any pending state updates
+    // (e.g. onAuthStateChange firing just after navigation), then redirect if
+    // still not authenticated.
+    const timer = setTimeout(() => {
+      if (!stableRef.current) return; // still in first frame — don't redirect yet
+      void navigate({ to: "/login", search: { redirect: redirectTo } });
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [ready, user, navigate, redirectTo]);
 
+  // Still loading session
   if (!ready) {
     return (
       <div className="mx-auto max-w-4xl space-y-4 px-4 py-12">
@@ -34,28 +61,13 @@ export function RequireAuth({ children, redirectTo }: { children: ReactNode; red
     );
   }
 
+  // Ready but no user yet — show a holding screen while the 100ms timer runs
   if (!user) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16">
-        <div className="surface-panel px-6 py-12 text-center">
-          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
-            <LockKeyhole className="size-7" aria-hidden />
-          </span>
-          <h1 className="mt-5 text-xl font-semibold">Please sign in to continue</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            This page holds your personal bookings and passes. Taking you to the sign-in page…
-          </p>
-          <div className="mt-6 flex justify-center gap-2">
-            <Button asChild>
-              <Link to="/login" search={{ redirect: redirectTo }}>
-                Sign in
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="border-white/12 bg-white/4">
-              <Link to="/">Back home</Link>
-            </Button>
-          </div>
-        </div>
+      <div className="mx-auto max-w-4xl space-y-4 px-4 py-12">
+        <Skeleton className="h-10 w-56" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }
