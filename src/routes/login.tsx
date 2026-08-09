@@ -55,8 +55,12 @@ function Login() {
       void navigate({ to: redirect });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "We couldn't sign you in. Please try again.";
-      // Detect email confirmation message and show a friendlier UI
-      if (msg.toLowerCase().includes("confirm") || msg.toLowerCase().includes("not yet confirmed")) {
+      // Show the confirmation UI for any email-confirmation related message
+      if (
+        msg.toLowerCase().includes("confirm") ||
+        msg.toLowerCase().includes("not yet confirmed") ||
+        msg.toLowerCase().includes("check your inbox")
+      ) {
         setConfirmationNeeded(true);
       } else {
         setError(msg);

@@ -133,33 +133,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
         email: email.trim().toLowerCase(),
         password,
       });
+
       if (error) {
-        if (
-          error.message.toLowerCase().includes("invalid login") ||
-          error.message.toLowerCase().includes("invalid credentials") ||
-          error.message.toLowerCase().includes("wrong password") ||
-          error.message.toLowerCase().includes("email not confirmed")
-        ) {
-          if (error.message.toLowerCase().includes("email not confirmed")) {
-            throw new Error(
-              "Please confirm your email address first. Check your inbox for a confirmation link from TransitEase.",
-            );
-          }
-          throw new Error("Incorrect email or password. Please check your details and try again.");
+        // Supabase v2 uses HTTP status codes — 400 means bad credentials or unconfirmed.
+        // We check the message for the confirmation case specifically.
+        const msg = error.message.toLowerCase();
+        if (msg.includes("email not confirmed") || msg.includes("email_not_confirmed")) {
+          throw new Error(
+            "Please confirm your email address first. Check your inbox for a confirmation link from TransitEase.",
+          );
         }
-        throw new Error(error.message);
+        // For all other auth failures (wrong password, no account, etc.)
+        // show a generic message — never expose the raw Supabase error.
+        throw new Error("Incorrect email or password. Please check your details and try again.");
       }
+
+      // No error, but no session — means email confirmation is still pending.
+      // Supabase v2 can return this state when "Confirm email" is enabled.
       if (!data.session) {
-        // Account created but email not yet confirmed
         throw new Error(
-          "Your account is not yet confirmed. Check your inbox for a confirmation email from TransitEase.",
+          "Please confirm your email address first. Check your inbox for a confirmation link from TransitEase.",
         );
       }
-      // User state set by onAuthStateChange
+
+      // User state is set by the onAuthStateChange listener — nothing to do here.
       return;
     }
 
-    // Demo fallback
+    // ── Demo / localStorage fallback (no Supabase configured) ────────────────
     await delay();
     const accounts = storage.getAccounts();
     const account = accounts[email.toLowerCase()];
