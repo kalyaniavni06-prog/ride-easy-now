@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { JourneyCard } from "@/components/JourneyCard";
 import { SearchWidget } from "@/components/SearchWidget";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -305,5 +304,3 @@ function CheckRow({
     </div>
   );
 }
-
-export { Badge };
