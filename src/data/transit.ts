@@ -100,8 +100,8 @@ function pad(n: number) {
 }
 
 function addMinutes(time: string, mins: number) {
-  const [h, m] = time.split(":").map(Number);
-  const total = h * 60 + m + mins;
+  const parts = time.split(":").map(Number);
+  const total = (parts[0] ?? 0) * 60 + (parts[1] ?? 0) + mins;
   return { time: `${pad(Math.floor(total / 60) % 24)}:${pad(total % 60)}`, day: Math.floor(total / 1440) };
 }
 
@@ -124,7 +124,7 @@ function buildStops(from: string, to: string, dep: string, durationMins: number,
   for (let i = 1; i <= count; i++) {
     const offset = Math.round((durationMins * i) / (count + 1) + r() * 12);
     const t = addMinutes(dep, offset);
-    stops.push({ name: midCities[Math.floor(r() * midCities.length)], time: t.time, day: t.day });
+    stops.push({ name: midCities[Math.floor(r() * midCities.length)] ?? to, time: t.time, day: t.day });
   }
   const end = addMinutes(dep, durationMins);
   stops.push({ name: to, time: end.time, day: end.day });
@@ -151,7 +151,7 @@ export function searchJourneys(from: string, to: string, date: string, type: "bu
     return {
       id: `B-${seed}-${i}`,
       type: "bus",
-      operator: BUS_OPERATORS[Math.floor(r() * BUS_OPERATORS.length)],
+      operator: BUS_OPERATORS[Math.floor(r() * BUS_OPERATORS.length)] ?? "GreenLine Express",
       code: `${ac ? "AC Sleeper" : "Non-AC Seater"} (2+1)`,
       from,
       to,
@@ -170,7 +170,9 @@ export function searchJourneys(from: string, to: string, date: string, type: "bu
   };
 
   const makeTrain = (i: number): Journey => {
-    const [name, code] = TRAIN_NAMES[i % TRAIN_NAMES.length];
+    const train = TRAIN_NAMES[i % TRAIN_NAMES.length] ?? ["Intercity Express", "12127"];
+    const name = train[0] ?? "Intercity Express";
+    const code = train[1] ?? "12127";
     const depH = (6 + i * 4 + Math.floor(r() * 2)) % 24;
     const dep = `${pad(depH)}:${pad(Math.floor(r() * 6) * 10)}`;
     const durationMins = Math.round((distance / (62 + r() * 20)) * 60);
@@ -216,7 +218,8 @@ export function unavailableSeats(journey: Journey, seatIds: string[]): Set<strin
   const targetBlocked = Math.max(0, seatIds.length - journey.seatsAvailable);
   let guard = 0;
   while (blocked.size < targetBlocked && guard < 5000) {
-    blocked.add(seatIds[Math.floor(r() * seatIds.length)]);
+    const pick = seatIds[Math.floor(r() * seatIds.length)];
+    if (pick) blocked.add(pick);
     guard++;
   }
   return blocked;
