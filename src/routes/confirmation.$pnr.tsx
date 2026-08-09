@@ -3,6 +3,7 @@ import { CheckCircle2, Download, TicketX } from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
 import { QrPlaceholder } from "@/components/QrPlaceholder";
+import { TripGuardian } from "@/components/TripGuardian";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppStore";
 import { formatDuration, formatINR } from "@/data/transit";
@@ -148,6 +149,11 @@ function Confirmation() {
           </p>
         </div>
       </article>
+
+      {/* Trip Guardian */}
+      <div className="mt-6 print:hidden">
+        <TripGuardian booking={booking} />
+      </div>
 
       {/* Actions */}
       <div className="mt-6 flex flex-wrap justify-center gap-3 print:hidden">

@@ -3,9 +3,10 @@ import { AlertTriangle, CalendarX2, MapPinOff, SearchX, SlidersHorizontal, Spark
 import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/EmptyState";
-import { JourneyCard } from "@/components/JourneyCard";
+import { JourneyCard, ScoredJourneyList } from "@/components/JourneyCard";
 import { SearchWidget } from "@/components/SearchWidget";
 import { SmartTripPlanner } from "@/components/SmartTripPlanner";
+import { SmartChoice } from "@/components/SmartChoice";
 import { TripComparison } from "@/components/TripComparison";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { formatINR, searchJourneys } from "@/data/transit";
+import { scoreJourneys } from "@/lib/journey-score";
 import { formatLongDate, isPastDate, validateJourneySearch } from "@/lib/search-params";
 import { cn } from "@/lib/utils";
 
@@ -276,9 +278,12 @@ function SearchResults() {
                   {/* Smart Trip Planner */}
                   <SmartTripPlanner search={search} />
 
-                  {/* Results */}
+                  {/* Help me choose */}
+                  <SmartChoice search={search} visibleCount={results.length} />
+
+                  {/* Results with TransitEase Score */}
                   <div className="space-y-4">
-                    {results.map((journey) => <JourneyCard key={journey.id} journey={journey} search={search} />)}
+                    <ScoredJourneyList journeys={scoreJourneys(results)} search={search} />
                   </div>
 
                   {/* Trip Comparison */}

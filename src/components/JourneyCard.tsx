@@ -1,30 +1,55 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Bus, Clock, Snowflake, Star, TrainFront, Users } from "lucide-react";
+import { ArrowRight, Bus, Clock, Leaf, Snowflake, Star, TrainFront, Trophy, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { formatDuration, formatINR, type Journey } from "@/data/transit";
+import { scoreJourneys } from "@/lib/journey-score";
 import type { JourneySearch } from "@/lib/search-params";
 import { cn } from "@/lib/utils";
 
-export function JourneyCard({ journey, search }: { journey: Journey; search: JourneySearch }) {
+interface JourneyCardProps {
+  journey: Journey;
+  search: JourneySearch;
+  /** Pass pre-computed scores so all cards in a list share the same pool */
+  score?: number;
+  isBestOverall?: boolean;
+  isEco?: boolean;
+}
+
+export function JourneyCard({ journey, search, score, isBestOverall, isEco }: JourneyCardProps) {
   const isBus = journey.type === "bus";
   const Icon = isBus ? Bus : TrainFront;
   const soldOut = journey.seatsAvailable === 0;
   const fewLeft = !soldOut && journey.seatsAvailable <= 5;
   const linkSearch = { ...search, from: journey.from, to: journey.to };
 
+  // Score colour
+  const scoreColour =
+    score === undefined ? ""
+    : score >= 75 ? "text-emerald-400"
+    : score >= 50 ? "text-primary"
+    : "text-amber-400";
+
   return (
     <article
       className={cn(
-        "surface-panel p-4 sm:p-5 transition-all",
-        "hover:border-primary/25 hover:shadow-[var(--shadow-lift)]",
-        soldOut && "opacity-70",
+        "surface-panel p-4 sm:p-5 transition-all duration-200",
+        "hover:border-primary/30 hover:shadow-[var(--shadow-lift)] hover:-translate-y-px",
+        soldOut && "opacity-60",
+        isBestOverall && "border-yellow-400/30 bg-yellow-400/3",
       )}
     >
+      {/* Best overall banner */}
+      {isBestOverall && (
+        <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-yellow-300">
+          <Trophy className="size-3.5 fill-yellow-400/30" aria-hidden />
+          Best Overall on this route
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
         {/* Left: operator + route */}
         <div className="min-w-0 flex-1">
-          {/* Header row */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Transport badge */}
             <span
@@ -42,16 +67,21 @@ export function JourneyCard({ journey, search }: { journey: Journey; search: Jou
             <h3 className="truncate text-sm font-bold text-foreground">{journey.operator}</h3>
             <span className="text-xs text-muted-foreground">{journey.code}</span>
 
-            {journey.ac && isBus ? (
+            {journey.ac && isBus && (
               <span className="inline-flex items-center gap-1 rounded-full border border-sky-400/20 bg-sky-400/8 px-2 py-0.5 text-[11px] font-medium text-sky-300">
                 <Snowflake className="size-3" aria-hidden /> AC
               </span>
-            ) : null}
-            {journey.direct ? (
+            )}
+            {journey.direct && (
               <span className="inline-flex items-center rounded-full border border-white/10 bg-white/4 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                 Direct
               </span>
-            ) : null}
+            )}
+            {isEco && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/8 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+                <Leaf className="size-3" aria-hidden /> Lower est. impact
+              </span>
+            )}
 
             <span className="ml-auto flex items-center gap-1 text-xs font-medium text-muted-foreground">
               <Star className="size-3.5 fill-yellow-400 text-yellow-400" aria-hidden />
@@ -59,13 +89,12 @@ export function JourneyCard({ journey, search }: { journey: Journey; search: Jou
             </span>
           </div>
 
-          {/* Departure → Arrival timeline */}
+          {/* Departure → Arrival */}
           <div className="mt-4 flex items-center gap-3">
             <div className="min-w-[4.5rem]">
               <p className="text-2xl font-bold tabular-nums leading-none">{journey.departure}</p>
               <p className="mt-1 text-xs text-muted-foreground">{journey.from}</p>
             </div>
-
             <div className="flex flex-1 flex-col items-center gap-1">
               <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <Clock className="size-3" aria-hidden />
@@ -80,12 +109,26 @@ export function JourneyCard({ journey, search }: { journey: Journey; search: Jou
                 {journey.stops.length - 2 > 0 ? `${journey.stops.length - 2} stops` : "Non-stop"}
               </span>
             </div>
-
             <div className="min-w-[4.5rem] text-right">
               <p className="text-2xl font-bold tabular-nums leading-none">{journey.arrival}</p>
               <p className="mt-1 text-xs text-muted-foreground">{journey.to}</p>
             </div>
           </div>
+
+          {/* TransitEase Score */}
+          {score !== undefined && (
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex-1 h-1.5 rounded-full bg-white/8 overflow-hidden">
+                <div
+                  className={cn("h-full rounded-full transition-all", score >= 75 ? "bg-emerald-400" : score >= 50 ? "bg-primary" : "bg-amber-400")}
+                  style={{ width: `${score}%` }}
+                />
+              </div>
+              <span className={cn("text-xs font-semibold tabular-nums", scoreColour)}>
+                Score {score}/100
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Right: fare + actions */}
@@ -117,12 +160,7 @@ export function JourneyCard({ journey, search }: { journey: Journey; search: Jou
               </Link>
             </Button>
             <Button asChild size="sm" disabled={soldOut} className="shadow-sm">
-              <Link
-                to="/seats/$journeyId"
-                params={{ journeyId: journey.id }}
-                search={linkSearch}
-                aria-disabled={soldOut}
-              >
+              <Link to="/seats/$journeyId" params={{ journeyId: journey.id }} search={linkSearch} aria-disabled={soldOut}>
                 Select seats
               </Link>
             </Button>
@@ -130,5 +168,23 @@ export function JourneyCard({ journey, search }: { journey: Journey; search: Jou
         </div>
       </div>
     </article>
+  );
+}
+
+/** Wraps a list of JourneyCards with pre-computed scores */
+export function ScoredJourneyList({ journeys, search }: { journeys: ReturnType<typeof scoreJourneys>; search: JourneySearch }) {
+  return (
+    <>
+      {journeys.map(({ journey, score, isBestOverall, isEco }) => (
+        <JourneyCard
+          key={journey.id}
+          journey={journey}
+          search={search}
+          score={score}
+          isBestOverall={isBestOverall}
+          isEco={isEco}
+        />
+      ))}
+    </>
   );
 }
