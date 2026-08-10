@@ -85,7 +85,7 @@ function ForgotPassword() {
               a few minutes.
             </p>
             <Button asChild className="mt-6 shadow-sm">
-              <Link to="/login">Back to log in</Link>
+              <Link to="/login" search={{}}>Back to log in</Link>
             </Button>
           </div>
         ) : (
@@ -122,7 +122,7 @@ function ForgotPassword() {
             <p className="text-center text-sm text-muted-foreground">
               Remember your password?{" "}
               <Link
-                to="/login"
+                to="/login" search={{}}
                 className="font-medium text-primary hover:underline underline-offset-2"
               >
                 Back to log in
