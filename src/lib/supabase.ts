@@ -1,15 +1,14 @@
-import { createClient } from "@supabase/supabase-js";
+// Thin re-export of the Cloud-generated Supabase client so the rest of the app
+// keeps a single import seam (`@/lib/supabase`).
+import { supabase as cloudClient } from "@/integrations/supabase/client";
 
-// Cast to string — bracket notation satisfies noPropertyAccessFromIndexSignature.
-// Vite statically replaces VITE_* at build time even with bracket notation when cast.
 const supabaseUrl: string = (import.meta.env["VITE_SUPABASE_URL"] as string | undefined) ?? "";
-const supabaseAnonKey: string = (import.meta.env["VITE_SUPABASE_ANON_KEY"] as string | undefined) ?? "";
+const supabaseKey: string =
+  (import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined) ??
+  (import.meta.env["VITE_SUPABASE_ANON_KEY"] as string | undefined) ??
+  "";
 
-export const isSupabaseConfigured: boolean = supabaseUrl.length > 0 && supabaseAnonKey.length > 0;
+export const isSupabaseConfigured: boolean = supabaseUrl.length > 0 && supabaseKey.length > 0;
 export const supabasePublicUrl: string = supabaseUrl;
 
-export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-    })
-  : null;
+export const supabase = isSupabaseConfigured ? cloudClient : null;

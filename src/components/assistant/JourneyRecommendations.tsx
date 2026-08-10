@@ -40,7 +40,7 @@ const TAG_CONFIG = {
 
 interface JourneyRecommendationsProps {
   recommendations: RecommendedJourney[];
-  search: Partial<JourneySearch>;
+  search: { [K in keyof JourneySearch]?: JourneySearch[K] | undefined };
 }
 
 export function JourneyRecommendations({ recommendations, search }: JourneyRecommendationsProps) {

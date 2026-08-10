@@ -20,13 +20,13 @@ export interface AssistantMessage {
 }
 
 export interface JourneyContext {
-  from?: string;
-  to?: string;
-  date?: string;
-  type?: "bus" | "train" | "both";
-  passengers?: number;
-  budget?: number;
-  priority?: "cheapest" | "fastest" | "comfortable";
+  from?: string | undefined;
+  to?: string | undefined;
+  date?: string | undefined;
+  type?: "bus" | "train" | "both" | undefined;
+  passengers?: number | undefined;
+  budget?: number | undefined;
+  priority?: "cheapest" | "fastest" | "comfortable" | undefined;
 }
 
 export interface RecommendedJourney {

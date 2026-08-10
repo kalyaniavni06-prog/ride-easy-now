@@ -109,7 +109,7 @@ export function Navbar() {
           ) : (
             <div className="hidden items-center gap-2 sm:flex">
               <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                <Link to="/login">Log in</Link>
+                <Link to="/login" search={{}}>Log in</Link>
               </Button>
               <Button asChild size="sm" className="shadow-sm">
                 <Link to="/signup">Sign up</Link>
@@ -150,7 +150,7 @@ export function Navbar() {
                 {!user && (
                   <div className="mt-4 grid gap-2 px-1">
                     <Button asChild variant="outline" className="border-white/12 bg-white/5">
-                      <Link to="/login">
+                      <Link to="/login" search={{}}>
                         <User className="mr-2 size-4" /> Log in
                       </Link>
                     </Button>
