@@ -117,11 +117,27 @@ export const draftStore = {
 };
 
 export function generatePNR(type: TransportType) {
+  const year = new Date().getFullYear();
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ";
   let letters = "";
   for (let i = 0; i < 3; i++) letters += alphabet[Math.floor(Math.random() * alphabet.length)] ?? "T";
   const digits = Math.floor(100000 + Math.random() * 899999);
-  return `${type === "bus" ? "TB" : "TR"}${letters}${digits}`;
+  // Format: TE-2026-TBXXX123456
+  return `TE-${year}-${type === "bus" ? "TB" : "TR"}${letters}${digits}`;
+}
+
+/**
+ * Look up a single booking by PNR from localStorage directly.
+ * Used as a fallback when the user state is not yet loaded or the
+ * booking was made as a guest — so confirmation always works.
+ */
+export function getBookingByPNR(pnr: string): Booking | null {
+  try {
+    const all = read<Booking[]>(KEYS.bookings, []);
+    return all.find((b) => b.id === pnr) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // ─── Recent searches ──────────────────────────────────────────────────────────

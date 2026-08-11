@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, Download, TicketX } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { EmptyState } from "@/components/EmptyState";
 import { QrPlaceholder } from "@/components/QrPlaceholder";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppStore";
 import { formatDuration, formatINR } from "@/data/transit";
 import { formatLongDate } from "@/lib/search-params";
+import { getBookingByPNR, type Booking } from "@/lib/storage";
 
 export const Route = createFileRoute("/confirmation/$pnr")({
   head: () => ({
@@ -26,7 +28,33 @@ export const Route = createFileRoute("/confirmation/$pnr")({
 function Confirmation() {
   const { pnr } = Route.useParams();
   const { bookings, ready } = useApp();
-  const booking = bookings.find((b) => b.id === pnr);
+
+  // Primary: find booking from React state (respects user filter)
+  // Fallback: read directly from localStorage — handles the race condition where
+  // ready=true but user state hasn't synced yet, and also handles guest bookings.
+  const [localBooking, setLocalBooking] = useState<Booking | null>(null);
+
+  useEffect(() => {
+    // Always check localStorage directly so confirmation works immediately after
+    // booking, even before onAuthStateChange fires.
+    const found = getBookingByPNR(pnr);
+    if (found) setLocalBooking(found);
+  }, [pnr]);
+
+  const booking = bookings.find((b) => b.id === pnr) ?? localBooking;
+
+  // Only show "not found" when:
+  // 1. App is ready (session loaded)
+  // 2. We checked localStorage (localBooking attempt complete)
+  // 3. Still no booking found
+  if (ready && localBooking === null && !booking) {
+    // Give one extra tick for localStorage to be checked
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-12 text-center text-sm text-muted-foreground">
+        Loading ticket…
+      </div>
+    );
+  }
 
   if (ready && !booking) {
     return (
@@ -34,7 +62,7 @@ function Confirmation() {
         <EmptyState
           icon={TicketX}
           title="We couldn't find that ticket"
-          description="This booking reference isn't linked to your account. Check My Bookings for your confirmed journeys."
+          description="This booking reference isn't in your history. Check My Bookings for your confirmed journeys."
           action={{ label: "Go to My Bookings", to: "/bookings" }}
           tone="danger"
         />

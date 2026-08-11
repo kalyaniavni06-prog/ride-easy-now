@@ -237,7 +237,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       ready,
       user,
-      bookings: user ? bookings.filter((b) => b.userEmail === user.email) : [],
+      // When logged in: show bookings belonging to this user + any guest bookings.
+      // When not logged in: show ALL bookings so the confirmation page always works
+      // (guest booking flow — user may not be logged in during checkout).
+      bookings: user
+        ? bookings.filter((b) => b.userEmail === user.email || b.userEmail === "guest")
+        : bookings,
       passes: user ? passes.filter((p) => p.userEmail === user.email) : [],
       signUp,
       signIn,
