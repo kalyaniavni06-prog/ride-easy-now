@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, CalendarX2, MapPinOff, SearchX, SlidersHorizontal, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import { EmptyState } from "@/components/EmptyState";
 import { JourneyCard, ScoredJourneyList } from "@/components/JourneyCard";
@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { formatINR, searchJourneys } from "@/data/transit";
 import { scoreJourneys } from "@/lib/journey-score";
 import { formatLongDate, isPastDate, validateJourneySearch } from "@/lib/search-params";
+import { getStoredPref, type TravelPref } from "@/components/TravelPreferences";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/search")({
@@ -45,6 +46,17 @@ function SearchResults() {
   const { from, to, date, type, passengers } = search;
 
   const [sort, setSort] = useState<SortKey>("cheapest");
+  const [pref, setPref] = useState<TravelPref>("budget");
+
+  // On mount, apply stored preference as default sort
+  useEffect(() => {
+    const stored = getStoredPref();
+    setPref(stored);
+    if (stored === "budget")               setSort("cheapest");
+    else if (stored === "fastest")         setSort("fastest");
+    else if (stored === "comfort")         setSort("cheapest");
+    else if (stored === "fewer-transfers") setSort("earliest");
+  }, []);
   const [types, setTypes] = useState<string[]>([]);
   const [depBuckets, setDepBuckets] = useState<string[]>([]);
   const [arrBuckets, setArrBuckets] = useState<string[]>([]);
@@ -70,12 +82,29 @@ function SearchResults() {
       if (j.fare > priceLimit) return false;
       return true;
     });
+
     return [...filtered].sort((a, b) => {
+      // Preference-based sorting (overrides manual sort when pref is set)
+      if (pref === "comfort") {
+        // Sort by rating desc, then AC first, then fare
+        if (b.rating !== a.rating) return b.rating - a.rating;
+        if (a.ac !== b.ac) return a.ac ? -1 : 1;
+        return a.fare - b.fare;
+      }
+      if (pref === "fewer-transfers") {
+        // Direct first, then fewest stops, then fare
+        if (a.direct !== b.direct) return a.direct ? -1 : 1;
+        const aStops = a.stops.length - 2;
+        const bStops = b.stops.length - 2;
+        if (aStops !== bStops) return aStops - bStops;
+        return a.fare - b.fare;
+      }
+      // Standard sort (cheapest / fastest / earliest)
       if (sort === "cheapest") return a.fare - b.fare;
       if (sort === "fastest") return a.durationMins - b.durationMins;
       return a.departure.localeCompare(b.departure);
     });
-  }, [all, types, depBuckets, arrBuckets, acOnly, directOnly, availableOnly, priceLimit, sort, passengers]);
+  }, [all, types, depBuckets, arrBuckets, acOnly, directOnly, availableOnly, priceLimit, sort, pref, passengers]);
 
   const toggle = (list: string[], setList: (v: string[]) => void, value: string) =>
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
@@ -201,6 +230,11 @@ function SearchResults() {
               <p className="mt-1 text-sm text-muted-foreground">
                 {formatLongDate(date)} · {results.length} of {all.length} options ·{" "}
                 {passengers === 1 ? "1 passenger" : `${passengers} passengers`}
+                {pref !== "budget" && (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                    {pref === "fastest" ? "⚡ Fastest first" : pref === "comfort" ? "🛋️ Comfort first" : "🎯 Direct first"}
+                  </span>
+                )}
               </p>
             </div>
 

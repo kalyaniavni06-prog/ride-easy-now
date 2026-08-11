@@ -209,7 +209,7 @@ function Home() {
 
       {/* Travel Preferences */}
       <section className="mx-auto max-w-6xl px-4 pb-14">
-        <TravelPreferences />
+        <TravelPreferences onChange={() => {/* preference saved to localStorage, picked up on next search */}} />
       </section>
     </>
   );
