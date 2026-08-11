@@ -1,22 +1,19 @@
 /**
  * Server-side AI assistant function.
  *
- * Uses TanStack Start's createServerFn so it only ever runs on the server.
- * The OPENAI_API_KEY environment variable is read server-side and NEVER
- * sent to the browser.
+ * Uses TanStack Start's createServerFn — runs on server ONLY.
+ * OPENAI_API_KEY is read server-side and NEVER sent to the browser.
  *
- * Required server environment variable (set in Vercel dashboard):
- *   OPENAI_API_KEY — your OpenAI API key
- *
- * Falls back to demo mode when no key is configured.
+ * Falls back to smart demo responses when no key is configured.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { searchJourneys, formatINR, formatDuration } from "@/data/transit";
+import { scoreJourneys } from "@/lib/journey-score";
 import type { AssistantQueryInput, AssistantQueryOutput } from "@/lib/ai-assistant";
 
 const SYSTEM_PROMPT = `You are a helpful AI Travel Assistant for TransitEase, an Indian bus and train booking platform.
 
-Your job is to help passengers:
+Help passengers:
 - Plan journeys between Indian cities
 - Compare bus vs train options
 - Find the cheapest, fastest, or most comfortable option
@@ -24,60 +21,186 @@ Your job is to help passengers:
 - Know what to carry and what to do if delayed
 
 RULES:
-1. Only use the journey data provided to you. Do NOT invent fares, schedules, seat availability, or platform numbers.
-2. When data is unavailable, say so clearly: "I don't have live information for this."
-3. Be friendly, concise, and use simple language — passengers may not be tech-savvy.
+1. Only use the journey data provided. Do NOT invent fares, schedules, seat availability, or platform numbers.
+2. When data is unavailable, say so clearly.
+3. Be friendly, concise, and use simple language.
 4. Format responses with markdown (bold, lists) for readability.
-5. Prices are in Indian Rupees (₹). Distances are between major Indian cities.
+5. Prices are in Indian Rupees (₹).
 6. Never claim a booking is confirmed unless the booking system confirms it.
-7. Never share one user's information with another.
-8. If asked about delays or platform numbers, always note that live data is not available.`;
+7. If asked about delays or platform numbers, note that live data is not available.`;
 
 function buildDemoResponse(query: string, journeyContext: string): string {
   const q = query.toLowerCase();
 
-  // Journey-context-aware responses when we have route data
+  // Parse journey data from context for actual calculations
+  const journeyLines = journeyContext
+    ? journeyContext.split("\n").filter((l) => l.trim().startsWith(/\d/.source) || /^\d+\./.test(l.trim()))
+    : [];
+
+  // Helper: extract journeys from context string for calculations
+  type ParsedJ = { operator: string; type: string; departure: string; arrival: string; durationStr: string; durationMins: number; fare: number; seats: number; rating: number };
+  const parseJourneys = (): ParsedJ[] => {
+    return journeyContext
+      .split("\n")
+      .filter((l) => /^\d+\./.test(l.trim()))
+      .map((line) => {
+        const fareM = line.match(/₹([\d,]+)\/seat/);
+        const durM = line.match(/\|\s*(\d+h\s*\d+m)\s*\|/);
+        const depArrM = line.match(/Dep (\d{2}:\d{2})→(\d{2}:\d{2})/);
+        const seatsM = line.match(/(\d+) seats/);
+        const ratingM = line.match(/([\d.]+)★/);
+        const typeM = line.match(/\[(BUS|TRAIN)\]/);
+        const opM = line.match(/\]\s*([^|]+)\s*\|/);
+
+        const fareStr = fareM?.[1]?.replace(/,/g, "") ?? "0";
+        const fare = parseInt(fareStr, 10);
+
+        const durStr = durM?.[1] ?? "0h 00m";
+        const durParts = durStr.match(/(\d+)h\s*(\d+)m/);
+        const durationMins = durParts ? parseInt(durParts[1] ?? "0", 10) * 60 + parseInt(durParts[2] ?? "0", 10) : 0;
+
+        return {
+          operator: opM?.[1]?.trim() ?? "Unknown",
+          type: typeM?.[1]?.toLowerCase() ?? "bus",
+          departure: depArrM?.[1] ?? "",
+          arrival: depArrM?.[2] ?? "",
+          durationStr: durStr,
+          durationMins,
+          fare,
+          seats: parseInt(seatsM?.[1] ?? "0", 10),
+          rating: parseFloat(ratingM?.[1] ?? "0"),
+        };
+      })
+      .filter((j) => j.fare > 0);
+  };
+
+  // ── Contextual responses with actual data ──────────────────────────────────
   if (journeyContext) {
-    if (q.includes("cheap") || q.includes("budget") || q.includes("price") || q.includes("₹")) {
-      return `Here are the available options sorted by price:\n\n${journeyContext}\n\nThe **first option** above has the lowest fare. If budget is your priority, that's the one to go with.\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+    const journeys = parseJourneys();
+    const available = journeys.filter((j) => j.seats > 0);
+
+    if (q.includes("cheap") || q.includes("budget") || q.includes("price") || q.includes("save") || q.includes("₹") || q.includes("cost")) {
+      if (available.length > 0) {
+        const sorted = [...available].sort((a, b) => a.fare - b.fare);
+        const cheapest = sorted[0]!;
+        const mostExpensive = sorted[sorted.length - 1]!;
+        const saving = mostExpensive.fare - cheapest.fare;
+        return `**Cheapest option on this route:**\n\n💰 **${cheapest.operator}** (${cheapest.type === "bus" ? "Bus" : "Train"})\n• Fare: **${formatINR(cheapest.fare)}/seat**\n• Departs: ${cheapest.departure} → Arrives: ${cheapest.arrival}\n• Duration: ${cheapest.durationStr}\n• Seats available: ${cheapest.seats}\n\n${saving > 0 ? `You save **${formatINR(saving)}** compared to the most expensive option on this route.` : "This is the only available option."}\n\n*Estimated demo fares based on route distance*`;
+      }
     }
-    if (q.includes("fast") || q.includes("quick") || q.includes("time")) {
-      return `Looking at journey durations for your route:\n\n${journeyContext}\n\nPick the option with the shortest travel time listed above.\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+
+    if (q.includes("fast") || q.includes("quick") || q.includes("earliest") || q.includes("shortest")) {
+      if (available.length > 0) {
+        const sorted = [...available].sort((a, b) => a.durationMins - b.durationMins);
+        const fastest = sorted[0]!;
+        const slowest = sorted[sorted.length - 1]!;
+        const timeSaved = slowest.durationMins - fastest.durationMins;
+        return `**Fastest option on this route:**\n\n⚡ **${fastest.operator}** (${fastest.type === "bus" ? "Bus" : "Train"})\n• Duration: **${fastest.durationStr}**\n• Departs: ${fastest.departure} → Arrives: ${fastest.arrival}\n• Fare: ${formatINR(fastest.fare)}/seat\n• Seats available: ${fastest.seats}\n\n${timeSaved > 0 ? `Arrives **${formatDuration(timeSaved)} sooner** than the slowest option.` : "All options have similar durations."}\n\n*Estimated demo schedule*`;
+      }
     }
-    if (q.includes("compare") || q.includes("train") || q.includes("bus") || q.includes("vs") || q.includes("which")) {
-      return `Here's what's available for your route:\n\n${journeyContext}\n\n**Quick comparison:** Trains are generally faster and more comfortable; buses are often cheaper and have more departure times. Look at the fares and durations above to decide which suits you.\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+
+    if (q.includes("best") || q.includes("recommend") || q.includes("suggest") || q.includes("choose") || q.includes("which") || q.includes("should i")) {
+      if (available.length > 0) {
+        // Score: weight fare (40%), duration (35%), rating (25%)
+        const maxFare = Math.max(...available.map((j) => j.fare));
+        const minFare = Math.min(...available.map((j) => j.fare));
+        const maxDur  = Math.max(...available.map((j) => j.durationMins));
+        const minDur  = Math.min(...available.map((j) => j.durationMins));
+        const maxRating = Math.max(...available.map((j) => j.rating));
+        const minRating = Math.min(...available.map((j) => j.rating));
+
+        const scored = available.map((j) => {
+          const fS = maxFare === minFare ? 1 : (maxFare - j.fare) / (maxFare - minFare);
+          const dS = maxDur  === minDur  ? 1 : (maxDur  - j.durationMins) / (maxDur  - minDur);
+          const rS = maxRating === minRating ? 1 : (j.rating - minRating) / (maxRating - minRating);
+          return { ...j, score: fS * 0.4 + dS * 0.35 + rS * 0.25 };
+        });
+
+        const best = scored.sort((a, b) => b.score - a.score)[0]!;
+        const reasons: string[] = [];
+        if (best.fare === minFare) reasons.push(`lowest fare at ${formatINR(best.fare)}`);
+        else if (best.fare <= minFare + (maxFare - minFare) * 0.3) reasons.push(`competitive fare (${formatINR(best.fare)})`);
+        if (best.durationMins === minDur) reasons.push(`fastest journey (${best.durationStr})`);
+        if (best.rating === maxRating && maxRating > minRating) reasons.push(`highest rated (${best.rating}★)`);
+        if (best.seats > 15) reasons.push(`good availability (${best.seats} seats)`);
+
+        const reasonStr = reasons.length > 0 ? reasons.join(", ") : "best overall balance of price and speed";
+        return `**My recommendation:**\n\n🏆 **${best.operator}** (${best.type === "bus" ? "Bus" : "Train"})\n• ${formatINR(best.fare)}/seat · ${best.durationStr} · Dep ${best.departure}\n• ${best.seats} seats available · ${best.rating}★\n\nRecommended because: ${reasonStr}.\n\n*Based on available demo schedule data*`;
+      }
     }
-    if (q.includes("best") || q.includes("recommend") || q.includes("suggest")) {
-      return `Based on your route data:\n\n${journeyContext}\n\nFor the **best overall value**, weigh the fare against the duration. The option with the highest rating (★) and a reasonable departure time is usually a safe bet.\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+
+    if (q.includes("compare") || (q.includes("train") && q.includes("bus")) || q.includes("vs") || q.includes("difference")) {
+      if (available.length >= 2) {
+        const buses = available.filter((j) => j.type === "bus");
+        const trains = available.filter((j) => j.type === "train");
+        if (buses.length > 0 && trains.length > 0) {
+          const cheapBus = [...buses].sort((a, b) => a.fare - b.fare)[0]!;
+          const cheapTrain = [...trains].sort((a, b) => a.fare - b.fare)[0]!;
+          const cheaperType = cheapBus.fare <= cheapTrain.fare ? "bus" : "train";
+          const cheaperOp = cheaperType === "bus" ? cheapBus : cheapTrain;
+          const fasterType = cheapBus.durationMins <= cheapTrain.durationMins ? "bus" : "train";
+          const fasterOp = fasterType === "bus" ? cheapBus : cheapTrain;
+          return `**Bus vs Train on this route:**\n\n🚌 **Cheapest Bus:** ${cheapBus.operator} — ${formatINR(cheapBus.fare)} · ${cheapBus.durationStr} · Dep ${cheapBus.departure}\n\n🚆 **Cheapest Train:** ${cheapTrain.operator} — ${formatINR(cheapTrain.fare)} · ${cheapTrain.durationStr} · Dep ${cheapTrain.departure}\n\n**Verdict:**\n• Choose **${cheaperType}** to save ${formatINR(Math.abs(cheapBus.fare - cheapTrain.fare))}\n• Choose **${fasterType}** to save ${formatDuration(Math.abs(cheapBus.durationMins - cheapTrain.durationMins))} on travel time\n\n*Estimated demo fares*`;
+        }
+        return `Here are all ${available.length} available options on your route, sorted by fare:\n\n${available.sort((a, b) => a.fare - b.fare).map((j, i) => `${i + 1}. **${j.operator}** (${j.type}) — ${formatINR(j.fare)} · ${j.durationStr} · ${j.seats} seats`).join("\n")}\n\n*Demo schedule data*`;
+      }
     }
-    if (q.includes("morning") || q.includes("early")) {
-      return `Here are all options on your route — look for departures before 12:00:\n\n${journeyContext}\n\n*Using demo schedule data · Add OPENAI_API_KEY for live AI*`;
+
+    if (q.includes("morning") || q.includes("early") || q.includes("before 12") || q.includes("am")) {
+      const morning = available.filter((j) => j.departure < "12:00");
+      if (morning.length > 0) {
+        return `**Morning departures (before 12:00):**\n\n${morning.sort((a, b) => a.departure.localeCompare(b.departure)).map((j, i) => `${i + 1}. **${j.operator}** (${j.type}) — Dep **${j.departure}** · ${j.durationStr} · ${formatINR(j.fare)}`).join("\n")}\n\n*Demo schedule data*`;
+      }
+      return `No morning departures (before 12:00) are available on this route. The earliest departure is ${available.sort((a, b) => a.departure.localeCompare(b.departure))[0]?.departure ?? "unavailable"}.`;
+    }
+
+    if (q.includes("how much") && (q.includes("save") || q.includes("saving") || q.includes("difference"))) {
+      if (available.length >= 2) {
+        const sorted = [...available].sort((a, b) => a.fare - b.fare);
+        const cheapest = sorted[0]!;
+        const expensive = sorted[sorted.length - 1]!;
+        const diff = expensive.fare - cheapest.fare;
+        return `**Fare comparison on this route:**\n\nCheapest: **${formatINR(cheapest.fare)}** (${cheapest.operator})\nMost expensive: **${formatINR(expensive.fare)}** (${expensive.operator})\n\nYou can save up to **${formatINR(diff)}** by choosing the cheapest option.\n\n*Estimated demo fares*`;
+      }
+    }
+
+    if (q.includes("seats") || q.includes("available") || q.includes("sold out") || q.includes("availability")) {
+      const withSeats = available.sort((a, b) => b.seats - a.seats);
+      if (withSeats.length > 0) {
+        return `**Seat availability on this route:**\n\n${withSeats.map((j, i) => `${i + 1}. **${j.operator}** — ${j.seats > 0 ? `**${j.seats} seats** available` : "**Sold out**"}`).join("\n")}\n\n*Book early — seats fill up quickly*`;
+      }
+    }
+
+    // General route info fallback
+    if (available.length > 0) {
+      const cheapest = [...available].sort((a, b) => a.fare - b.fare)[0]!;
+      const fastest = [...available].sort((a, b) => a.durationMins - b.durationMins)[0]!;
+      return `Here's a quick summary for your route:\n\n💰 **Cheapest:** ${cheapest.operator} — ${formatINR(cheapest.fare)}/seat\n⚡ **Fastest:** ${fastest.operator} — ${fastest.durationStr}\n🎟️ **${available.length}** options with seats available\n\nAsk me to compare, recommend the best, or find morning departures.\n\n*Demo schedule data*`;
     }
   }
 
-  // General responses without route context
+  // ── General responses (no route context) ──────────────────────────────────
   if (q.includes("delay") || q.includes("late") || q.includes("cancel")) {
-    return `**If your journey is delayed:**\n\n1. Stay at the boarding point and watch the official display board.\n2. **Trains:** Check the NTES app or ask at the enquiry counter.\n3. **Buses:** Call the operator helpline shown on your ticket.\n4. Keep your PNR/booking reference ready — you may need it for a refund claim.\n5. If delayed more than 2 hours, ask staff about rescheduling options.\n\nI don't have live delay data — always verify with the official operator.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
+    return `**If your journey is delayed:**\n\n1. Stay at the boarding point and watch the official display board.\n2. **Trains:** Check the NTES app or ask at the enquiry counter.\n3. **Buses:** Call the operator helpline shown on your ticket.\n4. Keep your PNR ready — you may need it for a refund claim.\n5. If delayed more than 2 hours, ask staff about rescheduling.\n\nI don't have live delay data — always verify with the official operator.`;
   }
 
-  if (q.includes("carry") || q.includes("checklist") || q.includes("pack") || q.includes("bring")) {
-    return `**Your travel checklist:**\n\n✅ Government photo ID (Aadhaar / Passport / Driving Licence)\n✅ Booking confirmation / PNR (screenshot it — saves data)\n✅ Water bottle and light snacks for longer journeys\n✅ Phone charger + power bank\n✅ Arrive 20–30 minutes before departure\n✅ Confirm your platform / bay number before boarding\n✅ Save an emergency contact on your phone\n\nFor overnight trips: add a blanket, eye mask and earplugs.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
+  if (q.includes("carry") || q.includes("checklist") || q.includes("pack") || q.includes("bring") || q.includes("what to")) {
+    return `**Travel checklist:**\n\n✅ Government photo ID (Aadhaar / Passport / Driving Licence)\n✅ Booking confirmation / PNR\n✅ Water and light snacks for longer journeys\n✅ Phone charger and power bank\n✅ Arrive 20–30 minutes before departure\n✅ Confirm platform / bay number before boarding\n✅ Emergency contact saved on your phone\n\nFor overnight journeys: add a light blanket, eye mask and earplugs.`;
   }
 
-  if (q.includes("platform") || q.includes("boarding") || q.includes("where")) {
-    return `**Finding your boarding point:**\n\n🚆 **Trains:** Your platform is shown on the departure board at the station. Match your train number (e.g. 22119) on the board.\n🚌 **Buses:** The bay number is on the display inside the bus terminal, or ask at the enquiry counter.\n\nArrive early — platforms and bays can change. I don't have live platform data.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
+  if (q.includes("platform") || q.includes("boarding") || q.includes("bay") || q.includes("where")) {
+    return `**Finding your boarding point:**\n\n🚆 **Trains:** Check the departure board at the station for your platform. Match your train number (e.g. 12009) on the board — it updates 30 min before departure.\n🚌 **Buses:** Bay number is displayed inside the bus terminal, or ask at the enquiry counter.\n\nAlways arrive 20–30 minutes early — platforms and bays can change. I don't have live platform data.`;
   }
 
-  if (q.includes("explain") || q.includes("booking") || q.includes("ticket")) {
-    return `**Understanding your booking:**\n\n• **PNR** — your unique booking reference. Keep it safe — you'll need it to board.\n• **Departure / Arrival** — times shown are at your boarding and drop points.\n• **Seat numbers** — verify before boarding that you're in the right seat.\n• **Fare paid** — includes base fare + 5% taxes + convenience fee.\n• **Status** — "Confirmed" means your seat is reserved.\n\nHave your PNR and ID ready when you board.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
+  if (q.includes("explain") || q.includes("booking") || q.includes("pnr") || q.includes("ticket")) {
+    return `**Understanding your booking:**\n\n• **PNR** — your unique booking reference. Keep it safe — you need it to board.\n• **Departure / Arrival** — times at your boarding and drop points respectively.\n• **Seat numbers** — verify your seat before boarding.\n• **Fare paid** — includes base fare + 5% GST + convenience fee.\n• **Status: Confirmed** — your seat is reserved.\n\nHave your PNR and a valid ID ready when you board.`;
   }
 
-  if (q.includes("plan") || q.includes("help") || q.includes("journey") || q.includes("travel")) {
-    return `I'd be happy to help plan your journey! To give you the best recommendation, tell me:\n\n• Where are you travelling **from** and **to**?\n• What **date** are you travelling?\n• Do you prefer **bus, train, or both**?\n• Is **price or speed** your priority?\n\nOnce you share these, I can compare options and recommend the best one for you.\n\n*Demo response · Add OPENAI_API_KEY for live AI*`;
+  if (q.includes("plan") || q.includes("journey") || q.includes("travel") || q.includes("go") || q.includes("from") || q.includes("to")) {
+    return `I'd love to help plan your journey! Tell me:\n\n• Where are you travelling **from** and **to**?\n• What **date** are you travelling?\n• Do you prefer **bus, train, or either**?\n• Is **price or speed** your priority?\n\nOnce you share these, I'll compare options and recommend the best one for you.`;
   }
 
-  // Fallback welcome
-  return `Hi! I'm your **TransitEase Travel Assistant**. I can help you:\n\n• **Plan a journey** — tell me your route and date\n• **Compare bus vs train** — price, duration, comfort\n• **Find cheapest / fastest** options\n• **Travel checklist** — what to carry\n• **Booking help** — understand your PNR and ticket\n• **Delay guidance** — what to do if things go wrong\n\nJust ask, or pick a quick prompt below.\n\n*Demo mode · Add OPENAI_API_KEY in Vercel for live AI responses*`;
+  return `Hi! I'm your **TransitEase Travel Assistant**.\n\nI can help you:\n\n• **Find the cheapest or fastest** option on your route\n• **Compare bus vs train** — price, duration, comfort\n• **Recommend the best option** based on your priorities\n• **Travel checklist** — what to carry\n• **Understand your booking** — PNR, seat, boarding guide\n• **Delay guidance** — what to do if things go wrong\n\nJust ask, or search a route first so I can give specific recommendations.`;
 }
 
 export const askAssistant = createServerFn({ method: "POST" })
@@ -85,7 +208,6 @@ export const askAssistant = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<AssistantQueryOutput> => {
     const { messages, context } = data;
 
-    // Build journey context string from available demo data
     const journeys =
       context.from && context.to && context.date
         ? searchJourneys(context.from, context.to, context.date, context.type ?? "both")
@@ -102,7 +224,6 @@ export const askAssistant = createServerFn({ method: "POST" })
             .join("\n")
         : "";
 
-    // ── Try OpenAI ────────────────────────────────────────────────────────────
     const apiKey = process.env["OPENAI_API_KEY"];
 
     if (!apiKey) {
@@ -112,7 +233,7 @@ export const askAssistant = createServerFn({ method: "POST" })
 
     try {
       const systemContent = journeyContext
-        ? `${SYSTEM_PROMPT}\n\n--- AVAILABLE JOURNEY DATA (use this, do not invent) ---\n${journeyContext}\n---`
+        ? `${SYSTEM_PROMPT}\n\n--- AVAILABLE JOURNEY DATA (use only this, never invent) ---\n${journeyContext}\n---`
         : SYSTEM_PROMPT;
 
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -124,18 +245,17 @@ export const askAssistant = createServerFn({ method: "POST" })
         body: JSON.stringify({
           model: "gpt-4o-mini",
           max_tokens: 600,
-          temperature: 0.7,
+          temperature: 0.6,
           messages: [
             { role: "system", content: systemContent },
-            ...messages.slice(-8), // Keep last 8 messages for context window
+            ...messages.slice(-8),
           ],
         }),
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        console.error("OpenAI API error:", response.status, errText);
-        throw new Error(`OpenAI API error: ${response.status}`);
+        console.error("OpenAI API error:", response.status);
+        throw new Error("OpenAI unavailable");
       }
 
       const result = (await response.json()) as {
@@ -144,13 +264,8 @@ export const askAssistant = createServerFn({ method: "POST" })
       const reply = result.choices[0]?.message?.content ?? "I couldn't generate a response. Please try again.";
       return { reply, isDemo: false };
     } catch (err) {
-      console.error("AI assistant error:", err);
+      console.error("AI assistant error:", err instanceof Error ? err.message : "unknown");
       const lastMsg = messages[messages.length - 1]?.content ?? "";
-      return {
-        reply:
-          "I'm having trouble connecting to the AI service right now. " +
-          buildDemoResponse(lastMsg, journeyContext).replace("⚠️ *Demo mode — OPENAI_API_KEY not configured. Connect your OpenAI key in Vercel to enable live AI.*\n\n", ""),
-        isDemo: true,
-      };
+      return { reply: buildDemoResponse(lastMsg, journeyContext), isDemo: true };
     }
   });

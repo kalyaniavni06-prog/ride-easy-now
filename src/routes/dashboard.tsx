@@ -209,12 +209,11 @@ function Dashboard() {
                 {cancelled.length} booking{cancelled.length === 1 ? "" : "s"} cancelled — check for refund eligibility.
               </li>
             )}
-            <li className="rounded-lg border border-white/8 bg-white/3 px-3 py-2.5 text-muted-foreground leading-snug">
-              Boarding points are confirmed 2 hours before departure.
-            </li>
-            <li className="rounded-lg border border-white/8 bg-white/3 px-3 py-2.5 text-muted-foreground leading-snug">
-              Weekly passes now cover suburban trains.
-            </li>
+            {upcoming.length === 0 && cancelled.length === 0 && (
+              <li className="rounded-lg border border-white/8 bg-white/3 px-3 py-2.5 text-muted-foreground leading-snug">
+                No new notifications. Book a journey to get started.
+              </li>
+            )}
           </ul>
         </section>
 

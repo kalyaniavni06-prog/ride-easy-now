@@ -4,6 +4,7 @@
  * Calculation is deterministic and based only on available demo data.
  */
 import type { Journey } from "@/data/transit";
+import { formatINR } from "@/data/transit";
 
 export interface ScoredJourney {
   journey: Journey;
@@ -72,5 +73,5 @@ export function buildSmartChoice(journeys: Journey[]): string {
 
   const reasonStr = reasons.length > 0 ? reasons.join(", ") : "best overall balance of price, speed and rating";
 
-  return `✨ I recommend **${j.operator}** (${j.type === "bus" ? "Bus" : "Train"}, ${j.departure}–${j.arrival}) with a TransitEase Score of **${top.score}/100** — ${reasonStr}. ${j.seatsAvailable} seats available at ${j.type === "bus" ? "₹" : "₹"}${j.fare.toLocaleString("en-IN")}/seat.`;
+  return `✨ I recommend **${j.operator}** (${j.type === "bus" ? "Bus" : "Train"}, ${j.departure}–${j.arrival}) with a TransitEase Score of **${top.score}/100** — ${reasonStr}. ${j.seatsAvailable} seats available at ${formatINR(j.fare)}/seat.`;
 }
