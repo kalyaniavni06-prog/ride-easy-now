@@ -33,7 +33,7 @@ function NotFoundComponent() {
             Go home
           </Link>
           <Link
-            to="/search"
+            to="/search" search={{}}
             className="inline-flex items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
           >
             Search journeys

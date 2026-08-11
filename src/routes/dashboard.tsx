@@ -112,7 +112,7 @@ function Dashboard() {
             <div className="mt-4">
               <p className="text-sm text-muted-foreground">No upcoming trips. Search a route to get moving.</p>
               <Button asChild size="sm" variant="outline" className="mt-4 border-white/12 bg-white/4">
-                <Link to="/search">Search journeys</Link>
+                <Link to="/search" search={{}}>Search journeys</Link>
               </Button>
             </div>
           )}
