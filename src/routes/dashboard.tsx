@@ -69,7 +69,7 @@ function Dashboard() {
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total bookings" value={String(bookings.length)} sub="all time" icon={Ticket} accent="cyan" />
         <StatCard label="Upcoming trips" value={String(upcoming.length)} sub="confirmed" icon={TrendingUp} accent="indigo" />
-        <StatCard label="Total spent" value={formatINR(totalSpend)} sub="demo only" icon={Wallet} accent="emerald" />
+        <StatCard label="Total spent" value={formatINR(totalSpend)} sub="confirmed bookings" icon={Wallet} accent="emerald" />
         <StatCard label="Completed trips" value={String(completed.length)} sub="past journeys" icon={BookOpen} accent="amber" />
       </div>
 
@@ -257,19 +257,27 @@ function Dashboard() {
           <SummaryItem label="Completed" value={String(completed.length)} />
           <SummaryItem label="Upcoming" value={String(upcoming.length)} />
           <SummaryItem
-            label="Favourite route"
-            value={bookings.length > 0 ? `${bookings[0]!.from} → ${bookings[0]!.to}` : "—"}
+            label="Top route"
+            value={(() => {
+              if (bookings.length === 0) return "—";
+              // Find most-booked route by counting occurrences
+              const counts: Record<string, number> = {};
+              bookings.forEach((b) => {
+                const key = `${b.from} → ${b.to}`;
+                counts[key] = (counts[key] ?? 0) + 1;
+              });
+              return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
+            })()}
           />
           <SummaryItem
             label="Most used"
             value={
-              bookings.filter(b => b.type === "bus").length >= bookings.filter(b => b.type === "train").length
+              bookings.filter((b) => b.type === "bus").length >= bookings.filter((b) => b.type === "train").length
                 ? "Bus"
                 : "Train"
             }
           />
         </div>
-        <p className="mt-3 text-[11px] text-muted-foreground">Based on your bookings in this browser · Demo data</p>
       </section>
     </div>
   );

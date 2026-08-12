@@ -56,7 +56,7 @@ const STATUS_CONFIG: Record<StatusType, {
     colour: "text-amber-400",
     bg: "bg-amber-400/8",
     border: "border-amber-400/25",
-    description: "Running approximately 20–30 minutes behind schedule. Check the display board.",
+    description: "Running behind schedule. Check the display board at the station for updates.",
   },
   "departed": {
     icon: Radio,

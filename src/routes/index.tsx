@@ -196,8 +196,8 @@ function Home() {
           </div>
           <div className="mt-10 flex flex-wrap gap-3">
             <Button asChild size="lg" className="shadow-sm">
-              <Link to="/search" search={{ from: "Delhi", to: "Jaipur", date, type: "both", passengers: 1 }}>
-                Start searching
+              <Link to="/search" search={{ from: "Mumbai", to: "Pune", date, type: "both", passengers: 1 }}>
+                Search journeys
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/12 bg-white/4 hover:bg-white/8">
@@ -209,7 +209,7 @@ function Home() {
 
       {/* Travel Preferences */}
       <section className="mx-auto max-w-6xl px-4 pb-14">
-        <TravelPreferences onChange={() => {/* preference saved to localStorage, picked up on next search */}} />
+        <TravelPreferences onChange={() => { /* Saved to localStorage — applied automatically on next search */ }} />
       </section>
     </>
   );

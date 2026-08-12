@@ -47,9 +47,9 @@ export function SmartTripPlanner({ search }: SmartTripPlannerProps) {
         <div>
           <h2 className="flex items-center gap-2 text-base font-bold">
             <Trophy className="size-4 text-yellow-400" aria-hidden />
-            Smart Trip Planner
+            Smart Trip Recommendations
           </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">AI-analysed recommendations for your route</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Scored by fare, duration, rating and availability</p>
         </div>
       </div>
 

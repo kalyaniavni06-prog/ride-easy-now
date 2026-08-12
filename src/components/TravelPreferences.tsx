@@ -60,7 +60,7 @@ export function TravelPreferences({ onChange }: TravelPreferencesProps) {
       <div className="flex items-center gap-2">
         <Settings2 className="size-4 text-muted-foreground" aria-hidden />
         <h2 className="text-sm font-semibold text-foreground">Travel Preferences</h2>
-        <span className="ml-auto text-xs text-muted-foreground">Changes result order instantly</span>
+        <span className="ml-auto text-xs text-muted-foreground">Applied on your next search</span>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {PREFS.map((p) => (
@@ -83,11 +83,11 @@ export function TravelPreferences({ onChange }: TravelPreferencesProps) {
         ))}
       </div>
       <p className="mt-2 text-center text-[11px] text-muted-foreground">
-        Active:{" "}
+        Selected:{" "}
         <span className="font-semibold text-primary">
           {PREFS.find((p) => p.id === selected)?.label}
         </span>{" "}
-        — results are sorted by this preference
+        — your search results will be sorted by this preference
       </p>
     </div>
   );

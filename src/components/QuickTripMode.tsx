@@ -5,7 +5,9 @@
  */
 import { useNavigate } from "@tanstack/react-router";
 import { Star, TrendingDown, Trophy, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 import { todayISO } from "@/lib/search-params";
+import { recentSearches } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 const MODES = [
@@ -48,21 +50,26 @@ interface QuickTripModeProps {
   to?: string;
 }
 
-export function QuickTripMode({ from = "Mumbai", to = "Pune" }: QuickTripModeProps) {
+export function QuickTripMode({ from: propFrom, to: propTo }: QuickTripModeProps) {
   const navigate = useNavigate();
   const date = todayISO();
+
+  // Use the user's last recent search if available, otherwise fall back to props
+  const [from, setFrom] = useState(propFrom ?? "Mumbai");
+  const [to, setTo] = useState(propTo ?? "Pune");
+
+  useEffect(() => {
+    const recent = recentSearches.get();
+    if (recent.length > 0 && recent[0]) {
+      setFrom(recent[0].from);
+      setTo(recent[0].to);
+    }
+  }, []);
 
   const go = (mode: (typeof MODES)[number]["id"]) => {
     void navigate({
       to: "/search",
-      search: {
-        from,
-        to,
-        date,
-        type: "both",
-        passengers: 1,
-        // Pass the quick mode as a hash-style param so search page can highlight
-      },
+      search: { from, to, date, type: "both", passengers: 1 },
       hash: `quick-${mode}`,
     });
   };

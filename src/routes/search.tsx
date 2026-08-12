@@ -232,7 +232,9 @@ function SearchResults() {
                 {passengers === 1 ? "1 passenger" : `${passengers} passengers`}
                 {pref !== "budget" && (
                   <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                    {pref === "fastest" ? "⚡ Fastest first" : pref === "comfort" ? "🛋️ Comfort first" : "🎯 Direct first"}
+                    {pref === "fastest" ? "⚡ Fastest first"
+                      : pref === "comfort" ? "🛋️ Highest rated first"
+                      : "🎯 Direct routes first"}
                   </span>
                 )}
               </p>
