@@ -5,20 +5,26 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { useApp } from "@/context/AppStore";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
     meta: [
       { title: "Reset password — TransitEase" },
-      { name: "description", content: "Reset your TransitEase account password." },
+      { name: "description", content: "Reset your TransitEase account password by email." },
       { property: "og:title", content: "Reset password — TransitEase" },
+      { property: "og:description", content: "Get a secure password reset link for TransitEase." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ForgotPassword,
 });
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 function ForgotPassword() {
+  const { requestPasswordReset } = useApp();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -27,33 +33,22 @@ function ForgotPassword() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email.trim() || !email.includes("@")) {
+
+    if (!EMAIL_RE.test(email.trim())) {
       setError("Please enter a valid email address.");
       return;
     }
+
     setBusy(true);
     try {
-      if (isSupabaseConfigured && supabase) {
-        // Use the current page origin as the redirect so it works on both
-        // Vercel production and local dev without hardcoding a URL.
-        const redirectTo =
-          typeof window !== "undefined"
-            ? `${window.location.origin}/login`
-            : "/login";
-        const { error: sbErr } = await supabase.auth.resetPasswordForEmail(
-          email.trim().toLowerCase(),
-          { redirectTo },
-        );
-        if (sbErr) throw new Error(sbErr.message);
-      }
-      // In demo mode (no Supabase) we still show success — never reveal whether
-      // an account exists for a given email (security best practice).
+      // Real Supabase Auth reset — redirect target is this deployment's origin.
+      await requestPasswordReset(email.trim());
       setSent(true);
     } catch (err) {
       setError(
-        err instanceof Error
+        err instanceof Error && err.message
           ? err.message
-          : "Something went wrong. Please try again.",
+          : "We couldn't reach the server. Check your connection and try again.",
       );
     } finally {
       setBusy(false);
@@ -67,9 +62,9 @@ function ForgotPassword() {
           <span className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
             <Bus className="size-6" aria-hidden />
           </span>
-          <h1 className="mt-4 text-2xl font-bold">Reset your password</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Enter your email and we'll send you a reset link.
+          <h1 className="mt-4 text-2xl font-bold tracking-tight">Reset your password</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Enter your email and we'll send you a secure reset link.
           </p>
         </div>
 
@@ -78,18 +73,27 @@ function ForgotPassword() {
             <span className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
               <MailCheck className="size-7" aria-hidden />
             </span>
-            <h2 className="mt-5 text-lg font-bold">Check your inbox</h2>
+            <h2 className="mt-5 text-lg font-bold">Reset link sent</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              If an account exists for <strong className="text-foreground">{email}</strong>, a
-              password reset link is on its way. Check your spam folder if you don't see it within
-              a few minutes.
+              Check your email inbox and spam folder. If an account exists for{" "}
+              <strong className="text-foreground">{email}</strong>, the link will arrive within a few
+              minutes.
             </p>
-            <Button asChild className="mt-6 shadow-sm">
-              <Link to="/login" search={{}}>Back to log in</Link>
-            </Button>
+            <div className="mt-6 grid gap-2">
+              <Button asChild className="shadow-sm">
+                <Link to="/login" search={{ redirect: "/dashboard" }}>Back to log in</Link>
+              </Button>
+              <Button
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => setSent(false)}
+              >
+                Use a different email
+              </Button>
+            </div>
           </div>
         ) : (
-          <form onSubmit={submit} className="surface-panel space-y-5 p-6">
+          <form onSubmit={submit} className="surface-panel space-y-5 p-6" noValidate>
             <div>
               <Label htmlFor="email" className="text-sm font-medium">
                 Email address
@@ -115,15 +119,16 @@ function ForgotPassword() {
             ) : null}
 
             <Button type="submit" className="w-full shadow-sm" disabled={busy}>
-              {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Send reset link
+              {busy ? <Loader2 className="mr-2 size-4 animate-spin" aria-hidden /> : null}
+              {busy ? "Sending…" : "Send reset link"}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
               Remember your password?{" "}
               <Link
-                to="/login" search={{}}
-                className="font-medium text-primary hover:underline underline-offset-2"
+                to="/login"
+                search={{ redirect: "/dashboard" }}
+                className="font-medium text-primary underline-offset-2 hover:underline"
               >
                 Back to log in
               </Link>

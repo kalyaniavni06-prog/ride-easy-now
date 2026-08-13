@@ -114,11 +114,17 @@ function Home() {
               <Link
                 key={action.label}
                 to={action.to}
-                search={
-                  action.type
-                    ? { from: "Mumbai", to: "Pune", date, type: action.type, passengers: 1 }
-                    : undefined
-                }
+                {...(action.type
+                  ? {
+                      search: {
+                        from: "Mumbai",
+                        to: "Pune",
+                        date,
+                        type: action.type,
+                        passengers: 1,
+                      },
+                    }
+                  : {})}
                 className="group flex items-center gap-3 rounded-xl border border-white/8 bg-white/4 p-4 transition-all hover:border-primary/30 hover:bg-white/7"
               >
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">

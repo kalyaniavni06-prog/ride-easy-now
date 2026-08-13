@@ -6,7 +6,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { Button } from "@/components/ui/button";
 import { isPassActive, useApp } from "@/context/AppStore";
 import { formatINR } from "@/data/transit";
-import { formatLongDate, todayISO } from "@/lib/search-params";
+import { defaultJourneySearch, formatLongDate, todayISO } from "@/lib/search-params";
 import { recentSearches, type RecentSearch } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
@@ -112,7 +112,7 @@ function Dashboard() {
             <div className="mt-4">
               <p className="text-sm text-muted-foreground">No upcoming trips. Search a route to get moving.</p>
               <Button asChild size="sm" variant="outline" className="mt-4 border-white/12 bg-white/4">
-                <Link to="/search" search={{}}>Search journeys</Link>
+                <Link to="/search" search={defaultJourneySearch}>Search journeys</Link>
               </Button>
             </div>
           )}
