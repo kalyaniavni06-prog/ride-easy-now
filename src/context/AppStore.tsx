@@ -184,7 +184,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ─── Password reset ───────────────────────────────────────────────────────
   const requestPasswordReset = useCallback<AppState["requestPasswordReset"]>(async (email) => {
     if (isSupabaseConfigured && supabase) {
-      await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
+      // Always send users back to this deployment's own origin (preview,
+      // production domain or localhost) — never a hardcoded URL.
+      const redirectTo =
+        typeof window !== "undefined" ? `${window.location.origin}/reset-password` : undefined;
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+        redirectTo ? { redirectTo } : {},
+      );
+      if (error) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes("rate") || msg.includes("too many") || (error.status ?? 0) === 429) {
+          throw new Error("Too many attempts. Please wait a few minutes and try again.");
+        }
+        if (msg.includes("invalid") && msg.includes("email")) {
+          throw new Error("That email address doesn't look valid.");
+        }
+        throw new Error("We couldn't send the reset email right now. Please try again shortly.");
+      }
       return;
     }
     await delay(700);
