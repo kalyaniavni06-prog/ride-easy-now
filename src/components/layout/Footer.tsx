@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Bus } from "lucide-react";
+import { defaultJourneySearch } from "@/lib/search-params";
 
 export function Footer() {
   return (
@@ -27,7 +28,7 @@ export function Footer() {
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Travel</p>
             <nav aria-label="Footer travel links" className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link to="/search" search={{}} className="hover:text-foreground transition-colors">Search journeys</Link>
+              <Link to="/search" search={defaultJourneySearch} className="hover:text-foreground transition-colors">Search journeys</Link>
               <Link to="/bookings" className="hover:text-foreground transition-colors">My Bookings</Link>
               <Link to="/pass" className="hover:text-foreground transition-colors">Travel Pass</Link>
             </nav>
@@ -36,7 +37,7 @@ export function Footer() {
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Account</p>
             <nav aria-label="Footer account links" className="flex flex-col gap-2 text-sm text-muted-foreground">
               <Link to="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
-              <Link to="/login" search={{}} className="hover:text-foreground transition-colors">Log in</Link>
+              <Link to="/login" search={{ redirect: "/dashboard" }} className="hover:text-foreground transition-colors">Log in</Link>
               <Link to="/signup" className="hover:text-foreground transition-colors">Sign up</Link>
             </nav>
           </div>

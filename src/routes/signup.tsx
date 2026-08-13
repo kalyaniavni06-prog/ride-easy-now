@@ -69,7 +69,7 @@ function Signup() {
               account, then log in.
             </p>
             <Button asChild className="mt-6 shadow-sm">
-              <Link to="/login" search={{}}>Go to log in</Link>
+              <Link to="/login" search={{ redirect: "/dashboard" }}>Go to log in</Link>
             </Button>
           </div>
         </div>
@@ -154,7 +154,7 @@ function Signup() {
 
           <p className="text-center text-sm text-muted-foreground">
             Already registered?{" "}
-            <Link to="/login" search={{}} className="font-medium text-primary hover:underline underline-offset-2">
+            <Link to="/login" search={{ redirect: "/dashboard" }} className="font-medium text-primary hover:underline underline-offset-2">
               Log in
             </Link>
           </p>

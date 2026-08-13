@@ -10,6 +10,9 @@ export const journeySearchSchema = z.object({
 
 export type JourneySearch = z.infer<typeof journeySearchSchema>;
 
+/** Safe default search params for links that point at /search without a query. */
+export const defaultJourneySearch: JourneySearch = journeySearchSchema.parse({});
+
 export const bookingSearchSchema = journeySearchSchema.extend({
   seats: z.string().default(""),
 });
