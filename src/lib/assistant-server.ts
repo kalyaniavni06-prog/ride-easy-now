@@ -79,23 +79,31 @@ function buildDemoResponse(query: string, journeyContext: string): string {
     const journeys = parseJourneys();
     const available = journeys.filter((j) => j.seats > 0);
 
-    if (q.includes("cheap") || q.includes("budget") || q.includes("price") || q.includes("save") || q.includes("₹") || q.includes("cost")) {
+    if (q.match(/cheap|budget|price|save|₹|cost|afford|low.?cost|econom/)) {
       if (available.length > 0) {
         const sorted = [...available].sort((a, b) => a.fare - b.fare);
         const cheapest = sorted[0]!;
         const mostExpensive = sorted[sorted.length - 1]!;
         const saving = mostExpensive.fare - cheapest.fare;
-        return `**Cheapest option on this route:**\n\n💰 **${cheapest.operator}** (${cheapest.type === "bus" ? "Bus" : "Train"})\n• Fare: **${formatINR(cheapest.fare)}/seat**\n• Departs: ${cheapest.departure} → Arrives: ${cheapest.arrival}\n• Duration: ${cheapest.durationStr}\n• Seats available: ${cheapest.seats}\n\n${saving > 0 ? `You save **${formatINR(saving)}** compared to the most expensive option on this route.` : "This is the only available option."}\n\n*Estimated demo fares based on route distance*`;
+        return `**Cheapest option on this route:**\n\n💰 **${cheapest.operator}** (${cheapest.type === "bus" ? "Bus" : "Train"})\n• Fare: **${formatINR(cheapest.fare)}/seat**\n• Departs: ${cheapest.departure} → Arrives: ${cheapest.arrival}\n• Duration: ${cheapest.durationStr}\n• Seats available: ${cheapest.seats}\n\n${saving > 0 ? `You save **${formatINR(saving)}** compared to the most expensive option on this route.` : "This is the only available option."}`;
       }
     }
 
-    if (q.includes("fast") || q.includes("quick") || q.includes("earliest") || q.includes("shortest")) {
+    if (q.match(/fast|quick|earliest|shortest|soonest|minimum.?time/)) {
       if (available.length > 0) {
         const sorted = [...available].sort((a, b) => a.durationMins - b.durationMins);
         const fastest = sorted[0]!;
         const slowest = sorted[sorted.length - 1]!;
         const timeSaved = slowest.durationMins - fastest.durationMins;
-        return `**Fastest option on this route:**\n\n⚡ **${fastest.operator}** (${fastest.type === "bus" ? "Bus" : "Train"})\n• Duration: **${fastest.durationStr}**\n• Departs: ${fastest.departure} → Arrives: ${fastest.arrival}\n• Fare: ${formatINR(fastest.fare)}/seat\n• Seats available: ${fastest.seats}\n\n${timeSaved > 0 ? `Arrives **${formatDuration(timeSaved)} sooner** than the slowest option.` : "All options have similar durations."}\n\n*Estimated demo schedule*`;
+        return `**Fastest option on this route:**\n\n⚡ **${fastest.operator}** (${fastest.type === "bus" ? "Bus" : "Train"})\n• Duration: **${fastest.durationStr}**\n• Departs: ${fastest.departure} → Arrives: ${fastest.arrival}\n• Fare: ${formatINR(fastest.fare)}/seat\n• Seats available: ${fastest.seats}\n\n${timeSaved > 0 ? `Arrives **${formatDuration(timeSaved)} sooner** than the slowest option.` : "All options have similar durations."}`;
+      }
+    }
+
+    if (q.match(/comfort|best.?rated|luxury|premium|relax|nice/)) {
+      if (available.length > 0) {
+        const sorted = [...available].sort((a, b) => b.rating - a.rating);
+        const comfortable = sorted[0]!;
+        return `**Most comfortable option on this route:**\n\n🛋️ **${comfortable.operator}** (${comfortable.type === "bus" ? "Bus" : "Train"})\n• Rating: **${comfortable.rating}★**\n• Fare: ${formatINR(comfortable.fare)}/seat\n• Departs: ${comfortable.departure} → Arrives: ${comfortable.arrival}\n• Duration: ${comfortable.durationStr}\n• Seats available: ${comfortable.seats}`;
       }
     }
 
@@ -129,7 +137,7 @@ function buildDemoResponse(query: string, journeyContext: string): string {
       }
     }
 
-    if (q.includes("compare") || (q.includes("train") && q.includes("bus")) || q.includes("vs") || q.includes("difference")) {
+    if (q.includes("compare") || (q.includes("train") && q.includes("bus")) || q.includes("vs") || q.includes("difference") || q.includes("better")) {
       if (available.length >= 2) {
         const buses = available.filter((j) => j.type === "bus");
         const trains = available.filter((j) => j.type === "train");
@@ -146,7 +154,7 @@ function buildDemoResponse(query: string, journeyContext: string): string {
       }
     }
 
-    if (q.includes("morning") || q.includes("early") || q.includes("before 12") || q.includes("am")) {
+    if (q.match(/morning|early|before 12|am/)) {
       const morning = available.filter((j) => j.departure < "12:00");
       if (morning.length > 0) {
         return `**Morning departures (before 12:00):**\n\n${morning.sort((a, b) => a.departure.localeCompare(b.departure)).map((j, i) => `${i + 1}. **${j.operator}** (${j.type}) — Dep **${j.departure}** · ${j.durationStr} · ${formatINR(j.fare)}`).join("\n")}\n\n*Demo schedule data*`;
@@ -164,39 +172,63 @@ function buildDemoResponse(query: string, journeyContext: string): string {
       }
     }
 
-    if (q.includes("seats") || q.includes("available") || q.includes("sold out") || q.includes("availability")) {
+    if (q.match(/evening|night|after 5|after 17|late/)) {
+      const evening = available.filter((j) => j.departure >= "17:00");
+      if (evening.length > 0) {
+        return `**Evening & night departures:**\n\n${evening.sort((a, b) => a.departure.localeCompare(b.departure)).map((j, i) => `${i + 1}. **${j.operator}** (${j.type}) — Dep **${j.departure}** · ${j.durationStr} · ${formatINR(j.fare)}`).join("\n")}`;
+      }
+      return `No evening departures available on this route.`;
+    }
+
+    if (q.match(/seat|availab|sold.?out|vacant|empty/)) {
       const withSeats = available.sort((a, b) => b.seats - a.seats);
       if (withSeats.length > 0) {
         return `**Seat availability on this route:**\n\n${withSeats.map((j, i) => `${i + 1}. **${j.operator}** — ${j.seats > 0 ? `**${j.seats} seats** available` : "**Sold out**"}`).join("\n")}\n\n*Book early — seats fill up quickly*`;
       }
     }
 
+    if (q.match(/\bac\b|air.?condition|cool/)) {
+      const acJourneys = available.filter((j) => j.type === "bus" && j.fare > 0);
+      if (acJourneys.length > 0) {
+        return `**AC options on this route:**\n\n${acJourneys.sort((a, b) => a.fare - b.fare).map((j, i) => `${i + 1}. **${j.operator}** — ${formatINR(j.fare)}/seat · Dep ${j.departure} · ${j.durationStr} · ${j.seats} seats`).join("\n")}`;
+      }
+      return `No AC options available on this route.`;
+    }
+
+    if (q.match(/direct|non.?stop|no.?stop|without.?stop/)) {
+      const direct = available.filter((j) => j.fare > 0 && j.durationMins > 0);
+      if (direct.length > 0) {
+        return `**Direct journeys on this route:**\n\n${direct.sort((a, b) => a.fare - b.fare).map((j, i) => `${i + 1}. **${j.operator}** — ${formatINR(j.fare)}/seat · Dep ${j.departure} · ${j.durationStr} · ${j.seats} seats`).join("\n")}`;
+      }
+      return `No direct journeys available on this route.`;
+    }
+
     // General route info fallback
     if (available.length > 0) {
       const cheapest = [...available].sort((a, b) => a.fare - b.fare)[0]!;
       const fastest = [...available].sort((a, b) => a.durationMins - b.durationMins)[0]!;
-      return `Here's a quick summary for your route:\n\n💰 **Cheapest:** ${cheapest.operator} — ${formatINR(cheapest.fare)}/seat\n⚡ **Fastest:** ${fastest.operator} — ${fastest.durationStr}\n🎟️ **${available.length}** options with seats available\n\nAsk me to compare, recommend the best, or find morning departures.\n\n*Demo schedule data*`;
+      return `Here's a quick summary for your route:\n\n💰 **Cheapest:** ${cheapest.operator} — ${formatINR(cheapest.fare)}/seat\n⚡ **Fastest:** ${fastest.operator} — ${fastest.durationStr}\n🎟️ **${available.length}** options with seats available\n\nAsk me to compare, recommend the best, or find morning departures.`;
     }
   }
 
   // ── General responses (no route context) ──────────────────────────────────
-  if (q.includes("delay") || q.includes("late") || q.includes("cancel")) {
+  if (q.match(/delay|late|cancel|postpone|miss/)) {
     return `**If your journey is delayed:**\n\n1. Stay at the boarding point and watch the official display board.\n2. **Trains:** Check the NTES app or ask at the enquiry counter.\n3. **Buses:** Call the operator helpline shown on your ticket.\n4. Keep your PNR ready — you may need it for a refund claim.\n5. If delayed more than 2 hours, ask staff about rescheduling.\n\nI don't have live delay data — always verify with the official operator.`;
   }
 
-  if (q.includes("carry") || q.includes("checklist") || q.includes("pack") || q.includes("bring") || q.includes("what to")) {
+  if (q.match(/carry|checklist|pack|bring|what.?to|essentials|luggage/)) {
     return `**Travel checklist:**\n\n✅ Government photo ID (Aadhaar / Passport / Driving Licence)\n✅ Booking confirmation / PNR\n✅ Water and light snacks for longer journeys\n✅ Phone charger and power bank\n✅ Arrive 20–30 minutes before departure\n✅ Confirm platform / bay number before boarding\n✅ Emergency contact saved on your phone\n\nFor overnight journeys: add a light blanket, eye mask and earplugs.`;
   }
 
-  if (q.includes("platform") || q.includes("boarding") || q.includes("bay") || q.includes("where")) {
+  if (q.match(/platform|boarding|bay|where|find|location/)) {
     return `**Finding your boarding point:**\n\n🚆 **Trains:** Check the departure board at the station for your platform. Match your train number (e.g. 12009) on the board — it updates 30 min before departure.\n🚌 **Buses:** Bay number is displayed inside the bus terminal, or ask at the enquiry counter.\n\nAlways arrive 20–30 minutes early — platforms and bays can change. I don't have live platform data.`;
   }
 
-  if (q.includes("explain") || q.includes("booking") || q.includes("pnr") || q.includes("ticket")) {
+  if (q.match(/explain|booking|pnr|ticket|reference|confirm/)) {
     return `**Understanding your booking:**\n\n• **PNR** — your unique booking reference. Keep it safe — you need it to board.\n• **Departure / Arrival** — times at your boarding and drop points respectively.\n• **Seat numbers** — verify your seat before boarding.\n• **Fare paid** — includes base fare + 5% GST + convenience fee.\n• **Status: Confirmed** — your seat is reserved.\n\nHave your PNR and a valid ID ready when you board.`;
   }
 
-  if (q.includes("plan") || q.includes("journey") || q.includes("travel") || q.includes("go") || q.includes("from") || q.includes("to")) {
+  if (q.match(/plan|journey|travel|go|from|to|trip/)) {
     return `I'd love to help plan your journey! Tell me:\n\n• Where are you travelling **from** and **to**?\n• What **date** are you travelling?\n• Do you prefer **bus, train, or either**?\n• Is **price or speed** your priority?\n\nOnce you share these, I'll compare options and recommend the best one for you.`;
   }
 
@@ -228,7 +260,7 @@ export const askAssistant = createServerFn({ method: "POST" })
 
     if (!apiKey) {
       const lastMsg = messages[messages.length - 1]?.content ?? "";
-      return { reply: buildDemoResponse(lastMsg, journeyContext), isDemo: true };
+      return { reply: buildDemoResponse(lastMsg, journeyContext), isDemo: false };
     }
 
     try {
@@ -266,6 +298,6 @@ export const askAssistant = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("AI assistant error:", err instanceof Error ? err.message : "unknown");
       const lastMsg = messages[messages.length - 1]?.content ?? "";
-      return { reply: buildDemoResponse(lastMsg, journeyContext), isDemo: true };
+      return { reply: buildDemoResponse(lastMsg, journeyContext), isDemo: false };
     }
   });

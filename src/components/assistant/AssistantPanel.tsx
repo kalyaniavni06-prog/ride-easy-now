@@ -1,14 +1,13 @@
 /**
  * AssistantPanel — polished AI chat interface.
  *
- * Modes:
- *  • AI mode   — OPENAI_API_KEY set in Vercel → real GPT responses via server function
- *  • Demo mode — no key → smart pre-written responses based on actual transit data
+ * Calls the server function `askAssistant` which invokes OpenAI server-side
+ * so the API key is never exposed to the browser.
  *
- * Security: API key is NEVER in client code. The server function reads it
- * server-side only. The client only sees { reply, isDemo }.
+ * When no OPENAI_API_KEY is configured the server function returns a
+ * smart pre-written response based on actual transit data.
  */
-import { Bot, Loader2, RefreshCw, Send, Sparkles, Trash2, X, Zap } from "lucide-react";
+import { Bot, Loader as Loader2, RefreshCw, Send, Sparkles, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 
 import { JourneyRecommendations } from "@/components/assistant/JourneyRecommendations";
@@ -71,6 +70,24 @@ function MarkdownContent({ content }: { content: string }) {
   return <div className="space-y-0.5">{nodes}</div>;
 }
 
+// ── Animated typing dots ──────────────────────────────────────────────────────
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1">
+      {[0, 1, 2].map((dot) => (
+        <span
+          key={dot}
+          className="size-1.5 rounded-full bg-primary"
+          style={{
+            animation: "typing-bounce 1.4s infinite ease-in-out",
+            animationDelay: `${dot * 0.16}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ── Context extractor ─────────────────────────────────────────────────────────
 const CITIES = ["Mumbai","Delhi","Bengaluru","Hyderabad","Chennai","Kolkata","Pune","Ahmedabad","Jaipur","Lucknow","Kochi","Nagpur","Indore","Goa"];
 
@@ -82,9 +99,9 @@ function extractContext(messages: AssistantMessage[], initial: JourneyContext): 
     if (bm?.[1]) ctx = { ...ctx, budget: parseInt(bm[1].replace(/,/g, ""), 10) };
     if (/\btrain\b/.test(text) && /\bonly\b/.test(text)) ctx = { ...ctx, type: "train" };
     if (/\bbus\b/.test(text) && /\bonly\b/.test(text)) ctx = { ...ctx, type: "bus" };
-    if (/cheap|low.?cost|budget/.test(text)) ctx = { ...ctx, priority: "cheapest" };
-    if (/fast|quick|minimum.?time/.test(text)) ctx = { ...ctx, priority: "fastest" };
-    if (/comfort|best.?rated|luxury/.test(text)) ctx = { ...ctx, priority: "comfortable" };
+    if (/cheap|low.?cost|budget|afford/.test(text)) ctx = { ...ctx, priority: "cheapest" };
+    if (/fast|quick|minimum.?time|soonest|earliest/.test(text)) ctx = { ...ctx, priority: "fastest" };
+    if (/comfort|best.?rated|luxury|premium/.test(text)) ctx = { ...ctx, priority: "comfortable" };
     if (msg.role === "user") {
       const found = CITIES.filter((c) => text.includes(c.toLowerCase()));
       if (found.length >= 2 && !ctx.from && !ctx.to) {
@@ -98,6 +115,45 @@ function extractContext(messages: AssistantMessage[], initial: JourneyContext): 
     }
   }
   return ctx;
+}
+
+// ── Follow-up suggestions ─────────────────────────────────────────────────────
+function generateFollowUps(messages: AssistantMessage[], context: JourneyContext): string[] {
+  const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+  if (!lastAssistant) return [];
+  const text = lastAssistant.content.toLowerCase();
+  const hasRoute = Boolean(context.from && context.to);
+  const suggestions: string[] = [];
+
+  if (hasRoute) {
+    if (text.includes("cheap") || text.includes("cheapest")) {
+      suggestions.push("What's the fastest option?");
+      suggestions.push("Compare bus vs train");
+    } else if (text.includes("fast") || text.includes("fastest")) {
+      suggestions.push("What's the cheapest option?");
+      suggestions.push("Which option is most comfortable?");
+    } else if (text.includes("compare") || text.includes("vs")) {
+      suggestions.push("Which one should I pick?");
+      suggestions.push("Show me morning departures");
+    } else if (text.includes("recommend") || text.includes("best")) {
+      suggestions.push("Is there a cheaper alternative?");
+      suggestions.push("What about the fastest option?");
+    } else {
+      suggestions.push("What's the cheapest option?");
+      suggestions.push("What's the fastest option?");
+    }
+    suggestions.push("What should I carry for this journey?");
+  } else {
+    if (text.includes("plan") || text.includes("from") || text.includes("to")) {
+      suggestions.push("I want to go from Mumbai to Pune");
+      suggestions.push("Show me trains from Delhi to Jaipur");
+    } else {
+      suggestions.push("Help me plan a journey");
+      suggestions.push("What can you help me with?");
+    }
+  }
+
+  return suggestions.slice(0, 3);
 }
 
 // ── Welcome message ───────────────────────────────────────────────────────────
@@ -119,7 +175,6 @@ export function AssistantPanel({ initialContext = {}, compact = false, onClose }
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAiMode, setIsAiMode] = useState(false); // set to true on first non-demo response
   const [lastInput, setLastInput] = useState<{ text: string; ctx: JourneyContext } | null>(null);
   const [context, setContext] = useState<JourneyContext>({
     date: todayISO(), type: "both", passengers: 1, ...initialContext,
@@ -142,10 +197,9 @@ export function AssistantPanel({ initialContext = {}, compact = false, onClose }
         { messages: messages.concat({ role: "user", content: text, timestamp: new Date() }).map((m) => ({ role: m.role, content: m.content })), context: ctx },
         (input) => askAssistant({ data: input }),
       );
-      if (!result.isDemo) setIsAiMode(true);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: result.reply, timestamp: new Date(), isDemo: result.isDemo },
+        { role: "assistant", content: result.reply, timestamp: new Date() },
       ]);
     } catch {
       setError("Something went wrong connecting to the assistant. Please try again.");
@@ -177,7 +231,6 @@ export function AssistantPanel({ initialContext = {}, compact = false, onClose }
     setMessages([{ ...WELCOME, timestamp: new Date() }]);
     setError(null);
     setLastInput(null);
-    setIsAiMode(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); void sendMessage(input); };
@@ -190,9 +243,16 @@ export function AssistantPanel({ initialContext = {}, compact = false, onClose }
     : [];
   const recommendations = analyzeJourneys(journeys, context);
   const hasRoute = Boolean(context.from && context.to);
+  const followUps = generateFollowUps(messages, context);
 
   return (
     <div className={cn("flex flex-col bg-background", compact ? "h-[600px] max-h-[80vh]" : "min-h-[calc(100vh-4rem)]")}>
+      <style>{`
+        @keyframes typing-bounce {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+          30% { transform: translateY(-4px); opacity: 1; }
+        }
+      `}</style>
 
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/8 bg-card px-4 py-3">
@@ -201,30 +261,13 @@ export function AssistantPanel({ initialContext = {}, compact = false, onClose }
             <Sparkles className="size-5" aria-hidden />
           </span>
           <div>
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-bold">AI Travel Assistant</p>
-              {/* Mode indicator */}
-              <span className={cn(
-                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                isAiMode
-                  ? "border border-emerald-400/25 bg-emerald-400/10 text-emerald-300"
-                  : "border border-amber-400/20 bg-amber-400/8 text-amber-300",
-              )}>
-                <Zap className="size-2.5" />
-                {isAiMode ? "AI mode" : "Demo mode"}
-              </span>
-            </div>
+            <p className="text-sm font-bold">AI Travel Assistant</p>
             <p className="text-xs text-muted-foreground">
-              {isAiMode ? "Powered by OpenAI" : "Smart demo responses · Add OpenAI key for live AI"}
+              {hasRoute ? `${context.from} → ${context.to}` : "Plan, compare & book journeys"}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          {hasRoute && (
-            <span className="hidden rounded-full border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary sm:inline-flex">
-              {context.from} → {context.to}
-            </span>
-          )}
           {messages.length > 1 && (
             <Button variant="ghost" size="icon" onClick={clearChat} className="size-7 text-muted-foreground hover:text-foreground" aria-label="Clear chat">
               <Trash2 className="size-3.5" />
@@ -241,42 +284,55 @@ export function AssistantPanel({ initialContext = {}, compact = false, onClose }
       {/* ── Messages ───────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
         <div className="mx-auto max-w-3xl space-y-4">
-          {messages.map((msg, i) => (
-            <div key={i} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
-              {msg.role === "assistant" && (
-                <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary" aria-hidden>
-                  <Bot className="size-4" />
-                </span>
-              )}
-              <div className={cn(
-                "max-w-[85%] rounded-2xl px-4 py-3",
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-tr-sm"
-                  : "border border-white/8 bg-card text-foreground rounded-tl-sm",
-              )}>
-                {msg.role === "assistant"
-                  ? <MarkdownContent content={msg.content} />
-                  : <p className="text-sm">{msg.content}</p>
-                }
-                {/* Demo mode label — subtle, not alarming */}
-                {msg.isDemo && msg.role === "assistant" && i > 0 && (
-                  <p className="mt-2 border-t border-white/8 pt-2 text-[11px] text-muted-foreground/70">
-                    Demo response · Based on schedule data
-                  </p>
+          {messages.map((msg, i) => {
+            const isLastAssistant = msg.role === "assistant" && i === messages.length - 1 && !loading;
+            return (
+              <div key={i} className="space-y-2">
+                <div className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+                  {msg.role === "assistant" && (
+                    <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary" aria-hidden>
+                      <Bot className="size-4" />
+                    </span>
+                  )}
+                  <div className={cn(
+                    "max-w-[85%] rounded-2xl px-4 py-3",
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-tr-sm"
+                      : "border border-white/8 bg-card text-foreground rounded-tl-sm",
+                  )}>
+                    {msg.role === "assistant"
+                      ? <MarkdownContent content={msg.content} />
+                      : <p className="text-sm">{msg.content}</p>
+                    }
+                  </div>
+                </div>
+                {/* Follow-up suggestions after last assistant message */}
+                {isLastAssistant && followUps.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pl-10">
+                    {followUps.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => void sendMessage(suggestion)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary transition-all hover:border-primary/40 hover:bg-primary/15 active:scale-95"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
-          {/* Loading indicator */}
+          {/* Loading indicator — animated typing dots */}
           {loading && (
             <div className="flex gap-3">
               <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
                 <Bot className="size-4" />
               </span>
-              <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm border border-white/8 bg-card px-4 py-3">
-                <Loader2 className="size-4 animate-spin text-primary" />
-                <span className="text-sm text-muted-foreground">Thinking…</span>
+              <div className="flex items-center rounded-2xl rounded-tl-sm border border-white/8 bg-card px-4 py-3.5">
+                <TypingDots />
               </div>
             </div>
           )}
